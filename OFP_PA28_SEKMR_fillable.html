@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en" translate="no" class="notranslate">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="content-language" content="en">
+<meta name="google" content="notranslate">
+<meta name="msapplication-config" content="none">
+<title>OFP - PA-28-181 Archer II (SEKMR)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #f8f7f4;
+    --border: #2a2a2a;
+    --border-light: #b0aea8;
+    --header-bg: #e8e6e0;
+    --input-bg: #fffef9;
+    --text: #1a1a1a;
+    --label: #555;
+    --accent: #1a5276;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 10px;
+    color: var(--text);
+    background: #ddd;
+    line-height: 1.3;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 10px auto;
+    padding: 8mm 10mm;
+    background: var(--bg);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+
+  @media print {
+    body { background: white; }
+    .page { box-shadow: none; margin: 0; padding: 6mm 8mm; }
+    .no-print { display: none !important; }
+    input, select, textarea { border-color: transparent !important; background: transparent !important; }
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 4px;
+  }
+
+  .header-left { font-weight: 700; font-size: 11px; }
+  .header-left span { font-weight: 400; font-size: 10px; margin-left: 10px; }
+  .header-right { font-size: 9px; text-align: right; }
+
+  /* Navigation log table */
+  table.navlog {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 4px;
+    font-size: 8px;
+  }
+
+  table.navlog th {
+    background: var(--header-bg);
+    border: 1.5px solid var(--border-light);
+    padding: 1px 2px;
+    font-weight: 600;
+    text-align: center;
+    font-size: 7px;
+    white-space: nowrap;
+  }
+
+  table.navlog th.group { border-bottom: none; font-size: 7.5px; }
+  table.navlog th.sub { border-top: none; font-size: 6.5px; }
+
+  table.navlog td {
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    border-left: 1px solid var(--border-light);
+    border-right: 1px solid var(--border-light);
+    padding: 0;
+    text-align: center;
+    height: 20px;
+  }
+
+  /* Remove inner border between paired columns */
+  table.navlog td.group-inner {
+    border-right: none;
+  }
+  table.navlog td.group-inner + td {
+    border-left: none;
+  }
+
+  table.navlog input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: var(--input-bg);
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    padding: 1px;
+    outline: none;
+  }
+
+  table.navlog input:focus { background: #e8f4fd; }
+
+  table.navlog tr.alt-header td {
+    background: var(--header-bg);
+    font-weight: 600;
+    font-size: 8px;
+    text-align: left;
+    padding-left: 4px;
+    height: 16px;
+  }
+
+  table.navlog tr.totals td {
+    font-weight: 600;
+    background: var(--header-bg);
+  }
+
+  table.navlog td.dash-cell {
+    color: #888;
+    font-size: 8px;
+  }
+
+  .section-label {
+    font-weight: 700;
+    font-size: 9px;
+    margin: 6px 0 3px;
+    letter-spacing: 0.5px;
+  }
+
+  .notes-area { width: 100%; border: 1px solid var(--border-light); min-height: 30px; margin-bottom: 4px; }
+  .notes-area textarea {
+    width: 100%;
+    min-height: 30px;
+    border: none;
+    background: var(--input-bg);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    padding: 3px;
+    resize: vertical;
+    outline: none;
+  }
+
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  /* Fuel / Power / Flight tables */
+  table.info-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8px;
+  }
+
+  table.info-table th {
+    background: var(--header-bg);
+    border: 1px solid var(--border-light);
+    padding: 1px 3px;
+    font-weight: 600;
+    text-align: center;
+    font-size: 7.5px;
+  }
+
+  table.info-table td {
+    border: 1px solid var(--border-light);
+    padding: 0;
+    height: 17px;
+  }
+
+  table.info-table td.label-cell {
+    padding: 1px 3px;
+    font-size: 7.5px;
+    white-space: nowrap;
+    background: var(--bg);
+  }
+
+  table.info-table input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: var(--input-bg);
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    padding: 1px;
+    outline: none;
+  }
+  table.info-table input:focus { background: #e8f4fd; }
+
+  /* Flight info box */
+  .flight-box { border: 1px solid var(--border-light); font-size: 8px; }
+  .flight-box .fb-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border-light);
+    padding: 1px 4px;
+    font-weight: 600;
+  }
+  .flight-box .fb-header label { display: flex; align-items: center; gap: 3px; font-size: 8px; }
+  .flight-box .fb-header input[type="checkbox"] { width: 12px; height: 12px; }
+
+  .flight-box .fb-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr auto 1fr;
+    border-bottom: 1px solid var(--border-light);
+    align-items: center;
+  }
+  .flight-box .fb-row:last-child { border-bottom: none; }
+  .flight-box .fb-label { padding: 1px 3px; font-size: 7.5px; white-space: nowrap; }
+  .flight-box .fb-input {
+    border: none;
+    border-left: 1px solid var(--border-light);
+    background: var(--input-bg);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    text-align: center;
+    padding: 2px;
+    height: 17px;
+    outline: none;
+    width: 100%;
+  }
+  .flight-box .fb-input:focus { background: #e8f4fd; }
+  .fb-bold { font-weight: 700; }
+
+  /* Mass & Balance table */
+  .mass-balance-section {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  table.mb-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8px;
+  }
+
+  table.mb-table th {
+    background: var(--header-bg);
+    border: 1px solid var(--border-light);
+    padding: 1px 3px;
+    font-weight: 600;
+    text-align: center;
+    font-size: 7px;
+  }
+
+  table.mb-table td {
+    border: 1px solid var(--border-light);
+    padding: 0;
+    height: 17px;
+  }
+
+  table.mb-table td.label-cell {
+    padding: 1px 3px;
+    font-size: 7.5px;
+    white-space: nowrap;
+    background: var(--bg);
+  }
+
+  table.mb-table input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: var(--input-bg);
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    padding: 1px;
+    outline: none;
+  }
+  table.mb-table input:focus { background: #e8f4fd; }
+  table.mb-table input.readonly-val {
+    background: var(--bg);
+    color: var(--text);
+  }
+  table.mb-table input.computed {
+    background: #f0f0ec;
+    color: #444;
+  }
+
+  .cg-envelope {
+    border: 1px solid var(--border-light);
+    background: var(--input-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Toolbar */
+  .toolbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: var(--accent);
+    color: white;
+    padding: 6px 16px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    z-index: 100;
+    font-size: 11px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .toolbar button {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 10px;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  .toolbar button:hover { background: rgba(255,255,255,0.25); }
+  .toolbar .title { font-weight: 700; margin-right: auto; }
+  .page { margin-top: 40px; }
+  @media print {
+    .toolbar { display: none; }
+    .page { margin-top: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <span class="title">OFP – PA-28-181 Archer II (SE-KMR)</span>
+  <button onclick="clearAll()">🗑 Clear All</button>
+  <button onclick="addMainRow()">＋ Add row</button>
+  <button onclick="saveToFile()">💾 Save</button>
+  <button onclick="loadFromFile()">📂 Load</button>
+  <button onclick="window.print()">🖨 Print / Save PDF</button>
+</div>
+
+<div class="page" id="page1">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">Based on eFlight Training <span>SEKMR PA-28-181 Archer II (P28A)</span> from 2023-01-01 Rev: 3</div>
+    <div class="header-right">
+      Version 2026-02-11 Rev 1
+    </div>
+  </div>
+
+  <!-- Navigation Log -->
+  <table class="navlog" id="navlog-table">
+    <thead>
+      <tr>
+        <th rowspan="2" style="width:60px">WAYPOINT</th>
+        <th rowspan="2" style="width:40px">AIRWAY</th>
+        <th rowspan="2" style="width:35px">ALT</th>
+        <th colspan="2" class="group">WIND</th>
+        <th rowspan="2" style="width:22px">TT</th>
+        <th rowspan="2" style="width:20px">var</th>
+        <th rowspan="2" style="width:22px">MT</th>
+        <th rowspan="2" style="width:20px">wca</th>
+        <th rowspan="2" style="width:22px">MH</th>
+        <th colspan="2" class="group">SPD KT</th>
+        <th colspan="2" class="group">DIST NM</th>
+        <th colspan="4" class="group">TIME</th>
+        <th colspan="4" class="group">FUEL</th>
+      </tr>
+      <tr>
+        <th class="sub" style="width:30px">DIR</th>
+        <th class="sub" style="width:22px">SPD</th>
+        <th class="sub" style="width:25px">TAS</th>
+        <th class="sub" style="width:25px">GS</th>
+        <th class="sub" style="width:25px">LEG</th>
+        <th class="sub" style="width:25px">REM</th>
+        <th class="sub" style="width:25px">LEG</th>
+        <th class="sub" style="width:25px">REM</th>
+        <th class="sub" style="width:22px">ETA</th>
+        <th class="sub" style="width:22px">ATA</th>
+        <th class="sub" style="width:22px">LEG</th>
+        <th class="sub" style="width:22px">MIN</th>
+        <th class="sub" style="width:22px">REM</th>
+        <th class="sub" style="width:22px">ACT</th>
+      </tr>
+    </thead>
+    <tbody id="navlog-body">
+    </tbody>
+  </table>
+
+  <!-- Notes -->
+  <div class="section-label">NOTES</div>
+  <div class="notes-area">
+    <textarea id="notes" rows="3" placeholder="Notes..."></textarea>
+  </div>
+
+  <!-- Bottom info grid -->
+  <div class="bottom-grid">
+    <!-- FUEL table -->
+    <div>
+      <table class="info-table">
+        <thead>
+          <tr><th>FUEL</th><th style="width:40px">LTR</th><th style="width:40px">TIME</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="label-cell">Taxi Fuel</td><td><input value="5" id="fuel-taxi-ltr" class="readonly-val" readonly></td><td style="text-align:center;color:#888">-</td></tr>
+          <tr><td class="label-cell">Destination Fuel</td><td><input id="fuel-dest-ltr" class="computed" readonly></td><td><input id="fuel-dest-time" class="computed" readonly></td></tr>
+          <tr><td class="label-cell">Route reserve (10%)</td><td><input id="fuel-reserve-ltr" class="computed" readonly></td><td><input id="fuel-reserve-time" class="computed" readonly></td></tr>
+          <tr><td class="label-cell">Alternate Fuel</td><td><input id="fuel-alt-ltr" class="computed" readonly></td><td><input id="fuel-alt-time" class="computed" readonly></td></tr>
+          <tr><td class="label-cell">Final reserve Fuel</td><td><input id="fuel-final-ltr" class="computed" readonly></td><td><input id="fuel-final-time" class="computed" readonly></td></tr>
+          <tr><td class="label-cell">Min Fuel</td><td><input id="fuel-min-ltr" class="computed" readonly></td><td><input id="fuel-min-time" class="computed" readonly></td></tr>
+          <tr><td class="label-cell">Extra Fuel</td><td><input id="fuel-extra-ltr"></td><td><input id="fuel-extra-time" class="computed" readonly></td></tr>
+          <tr><td class="label-cell">Block Fuel (129/182)</td><td><input id="fuel-block-ltr" class="computed" readonly></td><td><input id="fuel-block-time" class="computed" readonly></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- POWER table -->
+    <div>
+      <table class="info-table">
+        <thead><tr><th colspan="2">POWER</th></tr></thead>
+        <tbody>
+          <tr><td class="label-cell">ISA (+/-)</td><td><input id="power-isa"></td></tr>
+          <tr><td class="label-cell">Best Power/Econ (%)</td><td><input id="power-econ"></td></tr>
+          <tr><td class="label-cell">RPM</td><td><input id="power-rpm"></td></tr>
+          <tr><td class="label-cell">Fuel Flow (l/hr)</td><td><input id="power-ff"></td></tr>
+          <tr><td class="label-cell">TAS</td><td><input id="power-tas"></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FLIGHT box -->
+    <div>
+      <div class="flight-box">
+        <div class="fb-header">
+          <span>FLIGHT</span>
+          <label>IFR <input type="checkbox" id="ifr-check"></label>
+        </div>
+        <table class="info-table" style="border-top:none;">
+          <colgroup>
+            <col style="width:52px;">
+            <col>
+            <col>
+            <col style="width:16px;">
+            <col>
+            <col style="width:16px;">
+          </colgroup>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Tach</th>
+              <th colspan="2">Block</th>
+              <th colspan="2">Flight</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="label-cell"><b>In</b></td>
+              <td><input id="fl-tach-in"></td>
+              <td style="border-right:none;"><input id="fl-block-in" style="text-align:left;"></td>
+              <td style="border-left:none;vertical-align:top;padding:1px 2px 0 0;text-align:right;color:#bbb;font-size:6px;background:var(--input-bg);">in</td>
+              <td style="border-right:none;"><input id="fl-flight-in" style="text-align:left;"></td>
+              <td style="border-left:none;vertical-align:top;padding:1px 2px 0 0;text-align:right;color:#bbb;font-size:6px;background:var(--input-bg);">arr</td>
+            </tr>
+            <tr>
+              <td class="label-cell"><b>Out</b></td>
+              <td><input id="fl-tach-out"></td>
+              <td style="border-right:none;"><input id="fl-block-out" style="text-align:left;"></td>
+              <td style="border-left:none;vertical-align:top;padding:1px 2px 0 0;text-align:right;color:#bbb;font-size:6px;background:var(--input-bg);">off</td>
+              <td style="border-right:none;"><input id="fl-flight-out" style="text-align:left;"></td>
+              <td style="border-left:none;vertical-align:top;padding:1px 2px 0 0;text-align:right;color:#bbb;font-size:6px;background:var(--input-bg);">dep</td>
+            </tr>
+            <tr style="border-bottom:2px solid var(--border);">
+              <td class="label-cell"><b>Total</b></td>
+              <td><input id="fl-tach-total"></td>
+              <td colspan="2"><input id="fl-block-total"></td>
+              <td colspan="2"><input id="fl-flight-total"></td>
+            </tr>
+            <tr>
+              <td class="label-cell">Date:</td>
+              <td colspan="5"><input id="fl-date"></td>
+            </tr>
+            <tr>
+              <td class="label-cell">Student:</td>
+              <td colspan="5"><input id="fl-student"></td>
+            </tr>
+            <tr>
+              <td class="label-cell">PIC:</td>
+              <td colspan="2"><input id="fl-pic"></td>
+              <td colspan="2" class="label-cell" style="text-align:right;">FI Sign:</td>
+              <td><input id="fl-fi"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mass & Balance -->
+  <div class="mass-balance-section">
+    <div>
+      <table class="mb-table" id="mb-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th style="width:55px">Mass<br>(kg)</th>
+            <th style="width:55px">Limit<br>(kg)</th>
+            <th style="width:50px">CG<br>(cm)</th>
+            <th style="width:65px">Moment<br>(kg*cm)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="label-cell"><b>BEM</b></td>
+            <td><input value="737" class="readonly-val" readonly></td>
+            <td style="text-align:center;color:#888">-</td>
+            <td><input value="223,7" class="readonly-val" readonly></td>
+            <td><input value="164 760" class="readonly-val" readonly></td>
+          </tr>
+          <tr>
+            <td class="label-cell">Pilot / Co-pilot</td>
+            <td><input id="mb-pilot-mass" data-mb="pilot"></td>
+            <td style="text-align:center;color:#888">-</td>
+            <td><input value="204,5" class="readonly-val" readonly></td>
+            <td><input id="mb-pilot-moment" class="computed" readonly></td>
+          </tr>
+          <tr>
+            <td class="label-cell">Rear Seats</td>
+            <td><input id="mb-rear-mass" data-mb="rear"></td>
+            <td style="text-align:center;color:#888">-</td>
+            <td><input value="300,1" class="readonly-val" readonly></td>
+            <td><input id="mb-rear-moment" class="computed" readonly></td>
+          </tr>
+          <tr>
+            <td class="label-cell">Cargo Station 1</td>
+            <td><input id="mb-cargo-mass" data-mb="cargo"></td>
+            <td style="text-align:center;color:#888">91</td>
+            <td><input value="362,7" class="readonly-val" readonly></td>
+            <td><input id="mb-cargo-moment" class="computed" readonly></td>
+          </tr>
+          <tr>
+            <td class="label-cell"><b>Zero fuel mass</b></td>
+            <td><input id="mb-zfm-mass" class="computed" readonly></td>
+            <td style="text-align:center;font-size:7.5px">1 155</td>
+            <td><input id="mb-zfm-cg" class="computed" readonly></td>
+            <td><input id="mb-zfm-moment" class="computed" readonly></td>
+          </tr>
+          <tr>
+            <td class="label-cell">Block Fuel</td>
+            <td><input id="mb-fuel-mass" class="computed" readonly></td>
+            <td style="text-align:center;font-size:7.5px">131</td>
+            <td><input value="241,3" class="readonly-val" readonly></td>
+            <td><input id="mb-fuel-moment" class="computed" readonly></td>
+          </tr>
+          <tr>
+            <td class="label-cell"><b>Ramp mass</b></td>
+            <td><input id="mb-ramp-mass" class="computed" readonly></td>
+            <td style="text-align:center;font-size:7.5px">1 159</td>
+            <td><input id="mb-ramp-cg" class="computed" readonly></td>
+            <td><input id="mb-ramp-moment" class="computed" readonly></td>
+          </tr>
+          <tr>
+            <td class="label-cell">Taxi Fuel</td>
+            <td><input value="4" class="readonly-val" readonly></td>
+            <td style="text-align:center;color:#888">-</td>
+            <td><input value="241,3" class="readonly-val" readonly></td>
+            <td><input id="mb-taxi-moment" class="computed" readonly></td>
+          </tr>
+          <tr>
+            <td class="label-cell"><b>Takeoff Mass</b></td>
+            <td><input id="mb-tom-mass" class="computed" readonly></td>
+            <td style="text-align:center;font-size:7.5px">1 155</td>
+            <td><input id="mb-tom-cg" class="computed" readonly></td>
+            <td><input id="mb-tom-moment" class="computed" readonly></td>
+          </tr>
+          <tr>
+            <td class="label-cell">Destination Fuel</td>
+            <td><input id="mb-destfuel-mass" class="computed" readonly></td>
+            <td style="text-align:center;color:#888">-</td>
+            <td><input value="241,3" class="readonly-val" readonly></td>
+            <td><input id="mb-destfuel-moment" class="computed" readonly></td>
+          </tr>
+          <tr>
+            <td class="label-cell"><b>Landing Mass</b></td>
+            <td><input id="mb-ldg-mass" class="computed" readonly></td>
+            <td style="text-align:center;font-size:7.5px">1 155</td>
+            <td><input id="mb-ldg-cg" class="computed" readonly></td>
+            <td><input id="mb-ldg-moment" class="computed" readonly></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="cg-envelope" id="cg-chart">
+        <canvas id="cg-canvas" width="320" height="240"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Build navigation log rows =====
+const navlogBody = document.getElementById('navlog-body');
+const cols = ['wpt','airway','alt','wind_dir','wind_spd','tt','var','mt','wca','mh','tas','gs','dist_leg','dist_rem','time_leg','time_rem','eta','ata','fuel_leg','fuel_min','fuel_rem','fuel_act'];
+
+// Columns that should show a dash in the first empty data row (and alternate header rows)
+const dashCols = ['wind_dir','wind_spd','tt','var','mt','wca','mh','tas','gs','dist_leg','time_leg','eta'];
+// For the second "sub" rows under alternate headers: dash in dist_rem, time_rem
+const dashSubCols = ['dist_rem','time_rem'];
+
+function createNavRow(type, opts) {
+  const tr = document.createElement('tr');
+  if (type === 'header') {
+    tr.className = 'alt-header';
+    const td = document.createElement('td');
+    td.colSpan = cols.length;
+    td.textContent = opts?.label || 'Alternate';
+    tr.appendChild(td);
+    return tr;
+  }
+  if (type === 'totals') {
+    tr.className = 'totals';
+    cols.forEach(c => {
+      const td = document.createElement('td');
+      if (['dist_leg','dist_rem','time_leg','time_rem','fuel_leg'].includes(c)) {
+        td.innerHTML = '<input style="font-weight:600;background:var(--header-bg)">';
+      }
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+  tr.className = 'navlog-row-main';
+  const showDash = opts?.dash;
+  const showSubDash = opts?.subDash;
+  // Columns where the right border is removed (no inner line within group pairs)
+  // WIND: dir|spd, SPD KT: tas|gs, DIST: leg|rem, TIME: leg|rem and eta|ata, FUEL: leg|min|rem (but line before act)
+  const groupInnerCols = ['wind_dir', 'tas', 'dist_leg', 'time_leg', 'eta', 'fuel_leg', 'fuel_min'];
+
+  cols.forEach(c => {
+    const td = document.createElement('td');
+    if (groupInnerCols.includes(c)) td.classList.add('group-inner');
+    if (showDash && dashCols.includes(c)) {
+      td.className += ' dash-cell';
+      td.textContent = '-';
+    } else if (showSubDash && dashSubCols.includes(c)) {
+      td.className += ' dash-cell';
+      td.textContent = '-';
+    } else {
+      const inp = document.createElement('input');
+      inp.setAttribute('data-col', c);
+      td.appendChild(inp);
+    }
+    tr.appendChild(td);
+  });
+  return tr;
+}
+
+// Main route: first row with dashes, then 12 editable rows (13 total)
+navlogBody.appendChild(createNavRow('data', {dash: true}));
+for (let i = 0; i < 12; i++) {
+  navlogBody.appendChild(createNavRow('data'));
+}
+
+// Alternate 1
+navlogBody.appendChild(createNavRow('header', {label: 'Alternate 1'}));
+navlogBody.appendChild(createNavRow('data', {dash: true}));
+navlogBody.appendChild(createNavRow('data', {subDash: true}));
+
+// Alternate 2
+navlogBody.appendChild(createNavRow('header', {label: 'Alternate 2'}));
+navlogBody.appendChild(createNavRow('data', {dash: true}));
+navlogBody.appendChild(createNavRow('data', {subDash: true}));
+
+// Totals
+navlogBody.appendChild(createNavRow('totals'));
+
+// ===== Add row button =====
+function addMainRow() {
+  // Insert a new data row before the first alt-header
+  const altHeaders = navlogBody.querySelectorAll('tr.alt-header');
+  const insertBefore = altHeaders[0];
+  const newRow = createNavRow('data');
+  navlogBody.insertBefore(newRow, insertBefore);
+  recalcDistRem();
+  recalcTimeRem();
+}
+
+// ===== Dist REM auto-calculation =====
+function getMainRows() {
+  // All navlog-row-main rows before the first alt-header
+  const rows = [];
+  for (const tr of navlogBody.children) {
+    if (tr.classList.contains('alt-header')) break;
+    if (tr.classList.contains('navlog-row-main')) rows.push(tr);
+  }
+  return rows;
+}
+
+function recalcDistRem() {
+  const mainRows = getMainRows();
+
+  // Get all dist_leg values from rows 1+ (row 0 has no leg, just the departure)
+  const legValues = [];
+  const legFilled = [];
+  for (let i = 1; i < mainRows.length; i++) {
+    const legInput = mainRows[i].querySelector('input[data-col="dist_leg"]');
+    const raw = legInput ? legInput.value.trim() : '';
+    const v = parseFloat(raw);
+    legValues.push(isNaN(v) ? 0 : v);
+    legFilled.push(raw !== '');
+  }
+
+  const totalDist = legValues.reduce((a, b) => a + b, 0);
+
+  // Row 0: dist_rem = total distance, or empty if nothing filled
+  const row0Rem = mainRows[0]?.querySelector('input[data-col="dist_rem"]');
+  if (row0Rem) {
+    if (totalDist > 0) {
+      row0Rem.value = Math.round(totalDist);
+    } else {
+      row0Rem.value = '';
+    }
+  }
+
+  // Rows 1+: remaining decreases after each leg
+  let remaining = totalDist;
+  for (let i = 1; i < mainRows.length; i++) {
+    remaining -= legValues[i - 1];
+    const remInput = mainRows[i].querySelector('input[data-col="dist_rem"]');
+    if (remInput) {
+      if (!legFilled[i - 1]) {
+        remInput.value = '';
+      } else if (Math.round(remaining) === 0) {
+        remInput.value = '-';
+      } else {
+        remInput.value = Math.round(remaining);
+      }
+    }
+  }
+}
+
+// ===== Time helpers =====
+function parseTime(val) {
+  // Normalize separators to colon
+  val = val.trim().replace(/[.,\s]/g, ':');
+  const m = val.match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  return parseInt(m[1]) * 60 + parseInt(m[2]);
+}
+
+// Auto-normalize time_leg input on blur
+navlogBody.addEventListener('change', function(e) {
+  const col = e.target.getAttribute('data-col');
+  if (col === 'time_leg') {
+    const raw = e.target.value.trim().replace(/[.,\s]/g, ':');
+    if (raw.match(/^\d{1,2}:\d{2}$/)) {
+      e.target.value = raw;
+    }
+  }
+  if (col === 'var') {
+    e.target.value = e.target.value.toUpperCase();
+  }
+});
+
+function formatTime(totalMin) {
+  if (totalMin <= 0) return '-';
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return h + ':' + String(m).padStart(2, '0');
+}
+
+// ===== Time REM auto-calculation =====
+function recalcTimeRem() {
+  const mainRows = getMainRows();
+
+  const legValues = [];
+  const legFilled = [];
+  for (let i = 1; i < mainRows.length; i++) {
+    const legInput = mainRows[i].querySelector('input[data-col="time_leg"]');
+    const raw = legInput ? legInput.value.trim() : '';
+    const v = parseTime(raw);
+    legValues.push(v !== null ? v : 0);
+    legFilled.push(raw !== '');
+  }
+
+  const totalTime = legValues.reduce((a, b) => a + b, 0);
+
+  // Row 0: time_rem = total time
+  const row0Rem = mainRows[0]?.querySelector('input[data-col="time_rem"]');
+  if (row0Rem) {
+    row0Rem.value = totalTime > 0 ? formatTime(totalTime) : '';
+  }
+
+  // Rows 1+: remaining decreases after each leg
+  let remaining = totalTime;
+  for (let i = 1; i < mainRows.length; i++) {
+    remaining -= legValues[i - 1];
+    const remInput = mainRows[i].querySelector('input[data-col="time_rem"]');
+    if (remInput) {
+      if (!legFilled[i - 1]) {
+        remInput.value = '';
+      } else if (remaining <= 0) {
+        remInput.value = '-';
+      } else {
+        remInput.value = formatTime(remaining);
+      }
+    }
+  }
+}
+
+// ===== Fuel table & navlog fuel auto-calculation =====
+
+function getAlternateRows() {
+  // All navlog-row-main rows AFTER the first alt-header
+  const rows = [];
+  let inAlt = false;
+  for (const tr of navlogBody.children) {
+    if (tr.classList.contains('alt-header')) inAlt = true;
+    else if (inAlt && tr.classList.contains('navlog-row-main')) rows.push(tr);
+  }
+  return rows;
+}
+
+function recalcFuelTable() {
+  const mainRows = getMainRows();
+  const altRows = getAlternateRows();
+  const ff = parseFloat(document.getElementById('power-ff')?.value.replace(',', '.')) || 0;
+  const isIFR = document.getElementById('ifr-check')?.checked;
+
+  // 1. Taxi fuel = 5 (hardcoded)
+  const taxiFuel = 5;
+
+  // 2. Destination fuel = sum of all main route FUEL LEG - taxi fuel
+  let totalFuelLeg = 0;
+  for (const row of mainRows) {
+    const inp = row.querySelector('input[data-col="fuel_leg"]');
+    const v = parseFloat(inp?.value);
+    if (!isNaN(v)) totalFuelLeg += v;
+  }
+  const destFuel = Math.max(0, totalFuelLeg - taxiFuel);
+
+  // 3. Route reserve = 10% of destination fuel
+  const routeReserve = Math.round(destFuel * 0.1);
+
+  // 4. Alternate fuel = sum of FUEL LEG from alternate rows
+  let altFuel = 0;
+  for (const row of altRows) {
+    const inp = row.querySelector('input[data-col="fuel_leg"]');
+    const v = parseFloat(inp?.value);
+    if (!isNaN(v)) altFuel += v;
+  }
+
+  // 5. Final reserve = (VFR: 30min, IFR: 45min) × fuel flow / 60
+  const reserveMin = isIFR ? 45 : 30;
+  const finalReserve = ff > 0 ? Math.round(reserveMin * ff / 60) : 0;
+
+  // 6. Min fuel = dest + reserve + alt + final
+  const minFuel = destFuel + routeReserve + altFuel + finalReserve;
+
+  // 7. Extra fuel = manual
+  const extraFuel = parseFloat(document.getElementById('fuel-extra-ltr')?.value) || 0;
+
+  // 8. Block fuel = min + extra + taxi
+  const blockFuel = minFuel + extraFuel + taxiFuel;
+
+  // Time calculations (ltr / fuel flow)
+  function fuelToTime(ltr) {
+    if (ff <= 0 || ltr <= 0) return '';
+    const totalMin = Math.round(ltr / ff * 60);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return h + ':' + String(m).padStart(2, '0');
+  }
+
+  // Update fuel table
+  document.getElementById('fuel-dest-ltr').value = destFuel > 0 ? Math.round(destFuel) : '';
+  document.getElementById('fuel-dest-time').value = fuelToTime(destFuel);
+  document.getElementById('fuel-reserve-ltr').value = routeReserve > 0 ? routeReserve : '';
+  document.getElementById('fuel-reserve-time').value = fuelToTime(routeReserve);
+  document.getElementById('fuel-alt-ltr').value = altFuel > 0 ? Math.round(altFuel) : '';
+  document.getElementById('fuel-alt-time').value = fuelToTime(altFuel);
+  document.getElementById('fuel-final-ltr').value = finalReserve > 0 ? finalReserve : '';
+  document.getElementById('fuel-final-time').value = fuelToTime(finalReserve);
+  document.getElementById('fuel-min-ltr').value = minFuel > 0 ? Math.round(minFuel) : '';
+  document.getElementById('fuel-min-time').value = fuelToTime(minFuel);
+  document.getElementById('fuel-extra-time').value = fuelToTime(extraFuel);
+  document.getElementById('fuel-block-ltr').value = blockFuel > 0 ? Math.round(blockFuel) : '';
+  document.getElementById('fuel-block-time').value = fuelToTime(blockFuel);
+
+  // Now set navlog row 0: fuel_leg = taxi, fuel_min = Min Fuel - taxi, fuel_rem = Block Fuel - taxi
+  if (mainRows.length > 0) {
+    const row0Leg = mainRows[0].querySelector('input[data-col="fuel_leg"]');
+    const row0Min = mainRows[0].querySelector('input[data-col="fuel_min"]');
+    const row0Rem = mainRows[0].querySelector('input[data-col="fuel_rem"]');
+    if (row0Leg) row0Leg.value = taxiFuel;
+    if (row0Min) row0Min.value = minFuel > 0 ? Math.round(minFuel - taxiFuel) : '';
+    if (row0Rem) row0Rem.value = blockFuel > 0 ? Math.round(blockFuel - taxiFuel) : '';
+  }
+
+  // Rows 1+: fuel_min = prev fuel_min - current fuel_leg
+  //          fuel_rem = prev fuel_rem - current fuel_leg
+  for (let i = 1; i < mainRows.length; i++) {
+    const prevMinInput = mainRows[i - 1].querySelector('input[data-col="fuel_min"]');
+    const prevRemInput = mainRows[i - 1].querySelector('input[data-col="fuel_rem"]');
+    const curLegInput = mainRows[i].querySelector('input[data-col="fuel_leg"]');
+    const curMinInput = mainRows[i].querySelector('input[data-col="fuel_min"]');
+    const curRemInput = mainRows[i].querySelector('input[data-col="fuel_rem"]');
+
+    if (!curMinInput || !curRemInput) continue;
+
+    const curLeg = parseFloat(curLegInput?.value);
+    const prevMin = parseFloat(prevMinInput?.value);
+    const prevRem = parseFloat(prevRemInput?.value);
+
+    if (!isNaN(prevMin) && !isNaN(curLeg)) {
+      const val = Math.round(prevMin - curLeg);
+      curMinInput.value = val > 0 ? val : '-';
+    } else {
+      curMinInput.value = '';
+    }
+
+    if (!isNaN(prevRem) && !isNaN(curLeg)) {
+      const val = Math.round(prevRem - curLeg);
+      curRemInput.value = val > 0 ? val : '-';
+    } else {
+      curRemInput.value = '';
+    }
+  }
+
+  // Update Mass & Balance: Block Fuel and Destination Fuel (AVGAS: 0.719 kg/l)
+  const blockFuelKg = Math.round(blockFuel * AVGAS_KG_PER_LTR);
+  const destFuelKg = Math.round(destFuel * AVGAS_KG_PER_LTR);
+  document.getElementById('mb-fuel-mass').value = blockFuelKg > 0 ? blockFuelKg : '';
+  document.getElementById('mb-destfuel-mass').value = destFuelKg > 0 ? destFuelKg : '';
+  recalcMB();
+}
+
+// Attach recalc to navlog inputs
+navlogBody.addEventListener('input', function(e) {
+  const col = e.target.getAttribute('data-col');
+  if (col === 'wpt') {
+    const tr = e.target.closest('tr');
+    const tasInput = tr.querySelector('input[data-col="tas"]');
+    const tasGlobal = parseFloat(document.getElementById('power-tas')?.value.replace(',', '.'));
+    if (tasInput && tasInput.value.trim() === '' && !isNaN(tasGlobal) && tasGlobal > 0) {
+      tasInput.value = Math.round(tasGlobal);
+    }
+  }
+  if (col === 'dist_leg') {
+    recalcDistRem();
+    // Recalc time_leg and fuel_leg if GS is known
+    recalcWindTriangleForRow(e.target.closest('tr'));
+  }
+  if (col === 'time_leg') {
+    recalcTimeRem();
+  }
+  if (col === 'fuel_leg') {
+    recalcFuelTable();
+  }
+  if (col === 'tt' || col === 'var') {
+    recalcMTForRow(e.target.closest('tr'));
+  }
+  if (col === 'wind_dir' || col === 'wind_spd' || col === 'tas') {
+    recalcWindTriangleForRow(e.target.closest('tr'));
+  }
+  if (col === 'mt' || col === 'wca') {
+    recalcMHForRow(e.target.closest('tr'));
+  }
+});
+
+// Trigger fuel recalc from IFR checkbox, fuel flow, extra fuel
+document.getElementById('ifr-check').addEventListener('change', recalcFuelTable);
+document.getElementById('power-ff').addEventListener('input', recalcFuelTable);
+document.getElementById('fuel-extra-ltr').addEventListener('input', recalcFuelTable);
+
+// When Fuel Flow changes in POWER table, recalc all wind triangles (only empty cells)
+document.getElementById('power-ff').addEventListener('input', function() {
+  document.querySelectorAll('tr.navlog-row-main').forEach(tr => {
+    recalcWindTriangleForRow(tr, true);
+  });
+});
+
+// When POWER TAS changes, fill empty TAS cells on rows that have a waypoint
+document.getElementById('power-tas').addEventListener('change', function() {
+  const tasGlobal = parseFloat(this.value.replace(',', '.'));
+  if (isNaN(tasGlobal) || tasGlobal <= 0) return;
+  document.querySelectorAll('tr.navlog-row-main').forEach(tr => {
+    const wptInput = tr.querySelector('input[data-col="wpt"]');
+    const tasInput = tr.querySelector('input[data-col="tas"]');
+    if (wptInput && wptInput.value.trim() !== '' && tasInput && tasInput.value.trim() === '') {
+      tasInput.value = Math.round(tasGlobal);
+      recalcWindTriangleForRow(tr, true);
+    }
+  });
+});
+
+// Parse variation value: supports +/-N or E/W N (E=minus, W=plus)
+function parseVar(val) {
+  val = val.trim().toUpperCase();
+  if (val === '') return null;
+  // E/W format: e.g. "E4", "W5", "E 4°", "E4°"
+  const ewMatch = val.match(/^([EW])\s*(\d+)/);
+  if (ewMatch) {
+    const num = parseInt(ewMatch[2]);
+    return ewMatch[1] === 'E' ? -num : num;
+  }
+  // +/- format: e.g. "+5", "-3", "5", "-5"
+  const num = parseInt(val);
+  return isNaN(num) ? null : num;
+}
+
+// Parse wca: always +/- format
+function parseWca(val) {
+  val = val.trim();
+  if (val === '') return null;
+  const num = parseInt(val);
+  return isNaN(num) ? null : num;
+}
+
+function recalcMTForRow(tr) {
+  if (!tr) return;
+  const ttInput = tr.querySelector('input[data-col="tt"]');
+  const varInput = tr.querySelector('input[data-col="var"]');
+  const mtInput = tr.querySelector('input[data-col="mt"]');
+  if (!ttInput || !varInput || !mtInput) return;
+
+  const tt = parseInt(ttInput.value.trim());
+  const varVal = parseVar(varInput.value);
+
+  if (isNaN(tt) || varVal === null) {
+    mtInput.value = '';
+  } else {
+    let mt = tt + varVal;
+    mt = ((mt % 360) + 360) % 360;
+    mtInput.value = String(mt).padStart(3, '0');
+  }
+  // MT changed, recalc wind triangle (which also does MH)
+  recalcWindTriangleForRow(tr);
+}
+
+function recalcMHForRow(tr) {
+  if (!tr) return;
+  const mtInput = tr.querySelector('input[data-col="mt"]');
+  const wcaInput = tr.querySelector('input[data-col="wca"]');
+  const mhInput = tr.querySelector('input[data-col="mh"]');
+  if (!mtInput || !wcaInput || !mhInput) return;
+
+  const mt = parseInt(mtInput.value.trim());
+  const wca = parseWca(wcaInput.value);
+
+  if (isNaN(mt) || wca === null) {
+    mhInput.value = '';
+  } else {
+    let mh = mt + wca;
+    mh = ((mh % 360) + 360) % 360;
+    mhInput.value = String(mh).padStart(3, '0');
+  }
+}
+
+// ===== Wind triangle =====
+function deg2rad(d) { return d * Math.PI / 180; }
+function rad2deg(r) { return r * 180 / Math.PI; }
+
+function recalcWindTriangleForRow(tr, onlyEmpty) {
+  if (!tr) return;
+  const ttInput = tr.querySelector('input[data-col="tt"]');
+  const wdirInput = tr.querySelector('input[data-col="wind_dir"]');
+  const wspdInput = tr.querySelector('input[data-col="wind_spd"]');
+  const wcaInput = tr.querySelector('input[data-col="wca"]');
+  const gsInput = tr.querySelector('input[data-col="gs"]');
+  const tasInput = tr.querySelector('input[data-col="tas"]');
+  const distLegInput = tr.querySelector('input[data-col="dist_leg"]');
+  const timeLegInput = tr.querySelector('input[data-col="time_leg"]');
+  const fuelLegInput = tr.querySelector('input[data-col="fuel_leg"]');
+
+  // TAS from the row's own TAS column
+  const ff = parseFloat(document.getElementById('power-ff')?.value.replace(',', '.'));
+
+  const tt = parseFloat(ttInput?.value);
+  const wdir = parseFloat(wdirInput?.value);
+  const wspd = parseFloat(wspdInput?.value);
+  const tas = parseFloat(tasInput?.value);
+
+  if (isNaN(tt) || isNaN(wdir) || isNaN(wspd) || isNaN(tas) || tas <= 0) {
+    // Can't compute wind triangle, leave fields as-is
+    recalcMHForRow(tr);
+    return;
+  }
+
+  // Wind triangle calculation
+  // Wind blows FROM wdir.
+  //
+  // Cross-wind relative to track: wspd * sin(wdir - TT)
+  //   wdir - TT negative (wind from left) → sin negative → pushes right → correct left → WCA negative  
+  //   wdir - TT positive (wind from right) → sin positive → pushes left → correct right → WCA positive
+  //
+  // WCA = arcsin(wspd * sin(wdir - TT) / TAS)  — BUT with sign matching correction needed:
+  //   Wind from left (sin < 0) → need negative WCA (steer into wind, lower heading)
+  //   Wind from right (sin > 0) → need positive WCA (steer into wind, higher heading)
+  // Wait — wind from LEFT pushes RIGHT, steer LEFT (into wind) = LOWER heading = negative WCA
+  //   sin(wdir-TT) < 0 when wind from left → WCA should be negative → WCA = arcsin(negative) = negative ✓
+  //
+  // So: WCA = arcsin(wspd * sin(wdir - TT) / TAS) gives correct sign directly!
+  // GS = TAS * cos(WCA) - wspd * cos(wdir - TT)
+
+  const diffRad = deg2rad(wdir - tt);
+  const sinWCA = wspd * Math.sin(diffRad) / tas;
+
+  if (Math.abs(sinWCA) > 1) {
+    recalcMHForRow(tr);
+    return;
+  }
+
+  const wcaRad = Math.asin(sinWCA);
+  const wcaDeg = Math.round(rad2deg(wcaRad));
+  const gs = Math.round(tas * Math.cos(wcaRad) - wspd * Math.cos(diffRad));
+
+  // Set WCA (with +/- sign)
+  if (wcaInput) {
+    wcaInput.value = wcaDeg >= 0 ? '+' + wcaDeg : String(wcaDeg);
+  }
+
+  // Set GS
+  if (gsInput) {
+    gsInput.value = gs > 0 ? gs : '';
+  }
+
+  // Recalc MH from MT + WCA
+  recalcMHForRow(tr);
+
+  // Calculate TIME LEG from DIST LEG and GS
+  const distLeg = parseFloat(distLegInput?.value);
+  if (!isNaN(distLeg) && gs > 0 && timeLegInput) {
+    const timeMin = Math.round(distLeg / gs * 60);
+    const h = Math.floor(timeMin / 60);
+    const m = timeMin % 60;
+    const calcTimeStr = h + ':' + String(m).padStart(2, '0');
+    if (!onlyEmpty || timeLegInput.value.trim() === '') {
+      timeLegInput.value = calcTimeStr;
+      recalcTimeRem();
+    }
+    // Warn if existing value differs from calculated
+    const existingTime = parseTime(timeLegInput.value);
+    const calcTime = timeMin;
+    timeLegInput.style.color = (existingTime !== null && existingTime !== calcTime) ? '#c00' : '';
+  } else if (timeLegInput) {
+    timeLegInput.style.color = '';
+  }
+
+  // Calculate FUEL LEG from TIME LEG and Fuel Flow
+  if (!isNaN(ff) && ff > 0 && timeLegInput && fuelLegInput) {
+    const timeParsed = parseTime(timeLegInput.value);
+    if (timeParsed !== null && timeParsed > 0) {
+      const fuelLeg = Math.ceil(timeParsed / 60 * ff);
+      const mainRows = getMainRows();
+      if (tr !== mainRows[0]) {
+        if (!onlyEmpty || fuelLegInput.value.trim() === '') {
+          fuelLegInput.value = fuelLeg;
+        }
+        // Warn if existing value differs from calculated
+        const existingFuel = parseFloat(fuelLegInput.value);
+        fuelLegInput.style.color = (!isNaN(existingFuel) && existingFuel !== fuelLeg) ? '#c00' : '';
+      }
+    }
+  } else if (fuelLegInput) {
+    fuelLegInput.style.color = '';
+  }
+
+  // Trigger downstream recalcs
+  recalcDistRem();
+  recalcFuelTable();
+}
+
+// ===== CG Envelope Chart =====
+function drawCGEnvelope() {
+  const canvas = document.getElementById('cg-canvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+
+  ctx.fillStyle = '#fffef9';
+  ctx.fillRect(0, 0, w, h);
+
+  const margin = { top: 15, right: 15, bottom: 28, left: 38 };
+  const cw = w - margin.left - margin.right;
+  const ch = h - margin.top - margin.bottom;
+
+  const cgMin = 207, cgMax = 237;
+  const massMin = 700, massMax = 1200;
+
+  function toX(cg) { return margin.left + (cg - cgMin) / (cgMax - cgMin) * cw; }
+  function toY(mass) { return margin.top + (1 - (mass - massMin) / (massMax - massMin)) * ch; }
+
+  // Grid
+  ctx.strokeStyle = '#ddd';
+  ctx.lineWidth = 0.5;
+  for (let m = 700; m <= 1200; m += 50) {
+    ctx.beginPath();
+    ctx.moveTo(margin.left, toY(m));
+    ctx.lineTo(w - margin.right, toY(m));
+    ctx.stroke();
+  }
+  for (let c = 210; c <= 235; c += 5) {
+    ctx.beginPath();
+    ctx.moveTo(toX(c), margin.top);
+    ctx.lineTo(toX(c), h - margin.bottom);
+    ctx.stroke();
+  }
+
+  const envelope = [
+    [208, 739],
+    [208, 930],
+    [225, 1155],
+    [236, 1155],
+    [236, 739],
+    [208, 739]
+  ];
+
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  envelope.forEach(([cg, mass], i) => {
+    if (i === 0) ctx.moveTo(toX(cg), toY(mass));
+    else ctx.lineTo(toX(cg), toY(mass));
+  });
+  ctx.closePath();
+  ctx.stroke();
+
+  // Dashed line at mass = 962, clipped to envelope
+  // Left intersection: diagonal from (208,930) to (225,1155) at y=962
+  const dashY = 962;
+  const dashLeftX = 208 + (dashY - 930) / (1155 - 930) * (225 - 208);
+  // Right intersection: vertical wall at x=236
+  const dashRightX = 236;
+  ctx.setLineDash([6, 4]);
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(toX(dashLeftX), toY(dashY));
+  ctx.lineTo(toX(dashRightX), toY(dashY));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Axis labels
+  ctx.fillStyle = '#333';
+  ctx.font = '9px IBM Plex Sans, sans-serif';
+  ctx.textAlign = 'center';
+
+  for (let c = 210; c <= 235; c += 5) {
+    ctx.fillText(c, toX(c), h - margin.bottom + 14);
+  }
+
+  ctx.textAlign = 'right';
+  for (let m = 700; m <= 1200; m += 100) {
+    ctx.fillText(m, margin.left - 5, toY(m) + 3);
+  }
+
+  // Box around chart area
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(margin.left, margin.top, cw, ch);
+}
+
+drawCGEnvelope();
+
+// ===== Mass & Balance auto-calculations =====
+const AVGAS_KG_PER_LTR = 0.719;
+const BEM_MASS = 737;
+const BEM_CG = 223.7;
+const BEM_MOMENT = 164760;
+const CG_PILOT = 204.5;
+const CG_REAR = 300.1;
+const CG_CARGO = 362.7;
+const CG_FUEL = 241.3;
+const TAXI_FUEL_MASS = 4;
+const TAXI_FUEL_CG = 241.3;
+
+function parseNum(id) {
+  const el = document.getElementById(id);
+  if (!el) return 0;
+  const v = el.value.replace(/\s/g, '').replace(',', '.');
+  const n = parseFloat(v);
+  return isNaN(n) ? 0 : n;
+}
+
+function formatMoment(v) {
+  if (v === 0) return '';
+  return Math.round(v).toLocaleString('sv-SE');
+}
+
+function formatCG(v) {
+  if (v === 0) return '';
+  return v.toFixed(1).replace('.', ',');
+}
+
+function formatMass(v) {
+  if (v === 0) return '';
+  return Math.round(v).toLocaleString('sv-SE');
+}
+
+function recalcMB() {
+  const pilotMass = parseNum('mb-pilot-mass');
+  const rearMass = parseNum('mb-rear-mass');
+  const cargoMass = parseNum('mb-cargo-mass');
+  const fuelMass = parseNum('mb-fuel-mass');
+  const destFuelMass = parseNum('mb-destfuel-mass');
+
+  // Moments
+  const pilotMom = pilotMass * CG_PILOT;
+  const rearMom = rearMass * CG_REAR;
+  const cargoMom = cargoMass * CG_CARGO;
+  const fuelMom = fuelMass * CG_FUEL;
+
+  document.getElementById('mb-pilot-moment').value = formatMoment(pilotMom);
+  document.getElementById('mb-rear-moment').value = formatMoment(rearMom);
+  document.getElementById('mb-cargo-moment').value = formatMoment(cargoMom);
+  document.getElementById('mb-fuel-moment').value = formatMoment(fuelMom);
+
+  // Taxi fuel moment
+  const taxiMom = TAXI_FUEL_MASS * TAXI_FUEL_CG;
+  document.getElementById('mb-taxi-moment').value = formatMoment(taxiMom);
+
+  // Destination fuel moment
+  const destFuelMom = destFuelMass * CG_FUEL;
+  document.getElementById('mb-destfuel-moment').value = formatMoment(destFuelMom);
+
+  // ZFM
+  const zfmMass = BEM_MASS + pilotMass + rearMass + cargoMass;
+  const zfmMom = BEM_MOMENT + pilotMom + rearMom + cargoMom;
+  const zfmCG = zfmMass > 0 ? zfmMom / zfmMass : 0;
+  document.getElementById('mb-zfm-mass').value = formatMass(zfmMass);
+  document.getElementById('mb-zfm-cg').value = formatCG(zfmCG);
+  document.getElementById('mb-zfm-moment').value = formatMoment(zfmMom);
+
+  // Ramp mass
+  const rampMass = zfmMass + fuelMass;
+  const rampMom = zfmMom + fuelMom;
+  const rampCG = rampMass > 0 ? rampMom / rampMass : 0;
+  document.getElementById('mb-ramp-mass').value = formatMass(rampMass);
+  document.getElementById('mb-ramp-cg').value = formatCG(rampCG);
+  document.getElementById('mb-ramp-moment').value = formatMoment(rampMom);
+
+  // Takeoff mass = ramp - taxi
+  const tomMass = rampMass - TAXI_FUEL_MASS;
+  const tomMom = rampMom - taxiMom;
+  const tomCG = tomMass > 0 ? tomMom / tomMass : 0;
+  document.getElementById('mb-tom-mass').value = formatMass(tomMass);
+  document.getElementById('mb-tom-cg').value = formatCG(tomCG);
+  document.getElementById('mb-tom-moment').value = formatMoment(tomMom);
+
+  // Landing mass = TOM - dest fuel
+  const ldgMass = tomMass - destFuelMass;
+  const ldgMom = tomMom - destFuelMom;
+  const ldgCG = ldgMass > 0 ? ldgMom / ldgMass : 0;
+  document.getElementById('mb-ldg-mass').value = formatMass(ldgMass);
+  document.getElementById('mb-ldg-cg').value = formatCG(ldgCG);
+  document.getElementById('mb-ldg-moment').value = formatMoment(ldgMom);
+
+  // Redraw chart with plotted points
+  drawCGWithPoints(zfmMass, zfmCG, tomMass, tomCG, ldgMass, ldgCG);
+}
+
+function drawCGWithPoints(zfmMass, zfmCG, tomMass, tomCG, ldgMass, ldgCG) {
+  drawCGEnvelope();
+  const canvas = document.getElementById('cg-canvas');
+  const ctx = canvas.getContext('2d');
+  const margin = { top: 15, right: 15, bottom: 28, left: 38 };
+  const cw = canvas.width - margin.left - margin.right;
+  const ch = canvas.height - margin.top - margin.bottom;
+  const cgMin = 207, cgMax = 237, massMin = 700, massMax = 1200;
+  function toX(cg) { return margin.left + (cg - cgMin) / (cgMax - cgMin) * cw; }
+  function toY(mass) { return margin.top + (1 - (mass - massMin) / (massMax - massMin)) * ch; }
+
+  const points = [];
+  if (zfmMass > 0 && zfmCG > 0) points.push({mass: zfmMass, cg: zfmCG, label: Math.round(zfmMass)});
+  if (tomMass > 0 && tomCG > 0) points.push({mass: tomMass, cg: tomCG, label: Math.round(tomMass)});
+  if (ldgMass > 0 && ldgCG > 0) points.push({mass: ldgMass, cg: ldgCG, label: Math.round(ldgMass)});
+
+  if (points.length === 0) return;
+
+  // Draw line connecting points
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  points.forEach((p, i) => {
+    const x = toX(p.cg), y = toY(p.mass);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Draw points and labels
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = '8px IBM Plex Sans, sans-serif';
+  ctx.textAlign = 'left';
+  points.forEach(p => {
+    const x = toX(p.cg), y = toY(p.mass);
+    ctx.beginPath();
+    ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillText(p.label, x + 5, y + 3);
+  });
+}
+
+// Attach recalc to mass input fields
+document.querySelectorAll('[data-mb]').forEach(el => {
+  el.addEventListener('input', recalcMB);
+});
+
+// ===== Save / Load / Clear =====
+function getAllInputs() {
+  const data = {};
+  let idx = 0;
+  document.querySelectorAll('input:not([readonly]), textarea, select').forEach(el => {
+    const key = el.id || ('field_' + idx++);
+    if (el.type === 'checkbox') {
+      data[key] = el.checked;
+    } else {
+      data[key] = el.value;
+    }
+  });
+  return data;
+}
+
+function recalcAll() {
+  // Recalc wind triangles first (sets WCA, GS, time_leg, fuel_leg)
+  document.querySelectorAll('tr.navlog-row-main').forEach(tr => {
+    recalcMTForRow(tr);
+    recalcWindTriangleForRow(tr);
+  });
+  recalcDistRem();
+  recalcTimeRem();
+  recalcFuelTable();
+  recalcMB();
+}
+
+function setAllInputs(data) {
+  let idx = 0;
+  document.querySelectorAll('input:not([readonly]), textarea, select').forEach(el => {
+    const key = el.id || ('field_' + idx++);
+    if (data[key] !== undefined) {
+      if (el.type === 'checkbox') {
+        el.checked = data[key];
+      } else {
+        el.value = data[key];
+      }
+    }
+  });
+  recalcAll();
+}
+
+function saveToFile() {
+  const data = getAllInputs();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const defaultName = 'ofp_' + (document.getElementById('fl-date')?.value || 'draft').replace(/\//g, '-');
+  const filename = prompt('Save as:', defaultName);
+  if (!filename) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename.endsWith('.json') ? filename : filename + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function loadFromFile() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        setAllInputs(data);
+      } catch(err) {
+        alert('Could not load file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function clearAll() {
+  if (!confirm('Clear all fields?')) return;
+  document.querySelectorAll('input:not([readonly]):not(.readonly-val), textarea').forEach(el => {
+    if (el.type === 'checkbox') el.checked = false;
+    else el.value = '';
+  });
+  document.getElementById('fuel-taxi-ltr').value = '5';
+  recalcMB();
+}
+
+// Tab/Enter navigation in navlog
+document.querySelector('.navlog').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const inputs = Array.from(this.querySelectorAll('input'));
+    const idx = inputs.indexOf(e.target);
+    if (idx >= 0 && idx < inputs.length - 1) {
+      inputs[idx + 1].focus();
+    }
+  }
+});
+</script>
+
+</body>
+</html>

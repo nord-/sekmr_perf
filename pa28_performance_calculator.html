@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PA-28-181 Performance Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1a;
+    --card: #111827;
+    --card-border: #1e293b;
+    --accent: #f59e0b;
+    --accent-dim: #92400e;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-bright: #f8fafc;
+    --green: #10b981;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #a78bfa;
+    --cyan: #22d3ee;
+    --input-bg: #1e293b;
+    --input-border: #334155;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(245, 158, 11, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245, 158, 11, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  header { text-align: center; margin-bottom: 2rem; }
+
+  .aircraft-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, var(--accent-dim), transparent);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 0.35rem 1rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .aircraft-badge svg { width: 16px; height: 16px; fill: var(--accent); }
+
+  h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.4rem;
+  }
+
+  .subtitle { font-size: 0.85rem; color: var(--text-dim); }
+
+  /* Tabs */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1.5rem;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 0.85rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    position: relative;
+  }
+
+  .tab-btn.active {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--accent);
+  }
+
+  .tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  .tab-btn:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.03); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Panels */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 700px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .full { grid-column: 1 / -1; }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+
+  .panel-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .panel-label::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--accent);
+  }
+
+  .input-group { margin-bottom: 1.25rem; }
+  .input-group:last-child { margin-bottom: 0; }
+
+  .input-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.8rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  .input-unit {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+  }
+
+  .input-value-display {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--input-bg);
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent), 0 2px 8px rgba(0,0,0,0.4);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+  .range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    margin-top: 0.25rem;
+  }
+
+  /* Toggle buttons */
+  .toggle-row {
+    display: flex;
+    background: var(--input-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .toggle-btn {
+    flex: 1;
+    padding: 0.6rem 0.5rem;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+    letter-spacing: 0.03em;
+  }
+
+  .toggle-btn.active { background: var(--accent); color: var(--bg); }
+  .toggle-btn:hover:not(.active) { color: var(--text); background: rgba(245,158,11,0.1); }
+
+  /* Results */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .results-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+
+  @media (max-width: 600px) {
+    .results-grid { grid-template-columns: 1fr; }
+    .results-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .result-card {
+    background: var(--input-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+
+  .result-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+  .result-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .result-card.time::after { background: var(--blue); }
+  .result-card.distance::after { background: var(--green); }
+  .result-card.fuel::after { background: var(--accent); }
+  .result-card.tas::after { background: var(--cyan); }
+  .result-card.rpm::after { background: var(--purple); }
+  .result-card.ff::after { background: var(--red); }
+
+  .result-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    font-size: 1.1rem;
+  }
+
+  .result-card.time .result-icon { background: rgba(59,130,246,0.15); }
+  .result-card.distance .result-icon { background: rgba(16,185,129,0.15); }
+  .result-card.fuel .result-icon { background: rgba(245,158,11,0.15); }
+  .result-card.tas .result-icon { background: rgba(34,211,238,0.15); }
+  .result-card.rpm .result-icon { background: rgba(167,139,250,0.15); }
+  .result-card.ff .result-icon { background: rgba(239,68,68,0.15); }
+
+  .result-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-bottom: 0.5rem;
+  }
+
+  .result-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .result-card.time .result-value { color: var(--blue); }
+  .result-card.distance .result-value { color: var(--green); }
+  .result-card.fuel .result-value { color: var(--accent); }
+  .result-card.tas .result-value { color: var(--cyan); }
+  .result-card.rpm .result-value { color: var(--purple); }
+  .result-card.ff .result-value { color: var(--red); }
+
+  .result-unit {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+  }
+
+  /* Breakdown */
+  .breakdown {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--card-border);
+  }
+
+  .breakdown-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    font-size: 0.8rem;
+  }
+
+  .breakdown-row .label { color: var(--text-dim); }
+
+  .breakdown-row .val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .breakdown-row.highlight .val { color: var(--accent); }
+
+  .note {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(245, 158, 11, 0.05);
+    border: 1px solid rgba(245, 158, 11, 0.15);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .note strong { color: var(--accent); }
+
+  .isa-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    margin-top: 0.5rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 4px;
+    background: var(--input-bg);
+  }
+
+  .isa-indicator.warm { color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .isa-indicator.cold { color: var(--blue); border: 1px solid rgba(59,130,246,0.3); }
+  .isa-indicator.std { color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+
+  .conditions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    justify-content: center;
+  }
+
+  .conditions span {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+  }
+
+  .fairings-check {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.8rem;
+    color: var(--text);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .fairings-check input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--input-border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .fairings-check input[type="checkbox"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .fairings-check input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--bg);
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="aircraft-badge">
+      <svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+      PA-28-181 Archer II
+    </div>
+    <h1>Performance Calculator</h1>
+    <p class="subtitle">Climb, Cruise Speed & Engine Performance från POH</p>
+  </header>
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('climb')">⬆ Climb</button>
+    <button class="tab-btn" onclick="switchTab('cruise')">✈ Cruise</button>
+    <button class="tab-btn" onclick="switchTab('descent')">⬇ Descent</button>
+  </div>
+
+  <!-- ═══════════════ CLIMB TAB ═══════════════ -->
+  <div class="tab-content active" id="tab-climb">
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-label">Avgång</div>
+        <div class="input-group">
+          <div class="input-label"><span>Pressure Altitude</span><span class="input-unit">ft</span></div>
+          <div class="input-value-display" id="clb_depAltD">0</div>
+          <input type="range" id="clb_depAlt" min="0" max="12000" step="100" value="0">
+          <div class="range-labels"><span>SL</span><span>12 000</span></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>OAT</span><span class="input-unit">°C</span></div>
+          <div class="input-value-display" id="clb_depTempD">15</div>
+          <input type="range" id="clb_depTemp" min="-40" max="50" step="1" value="15">
+          <div class="range-labels"><span>-40</span><span>+50</span></div>
+        </div>
+        <div class="isa-indicator std" id="clb_depIsa">ISA ±0°C</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Cruise / TOC</div>
+        <div class="input-group">
+          <div class="input-label"><span>Pressure Altitude</span><span class="input-unit">ft</span></div>
+          <div class="input-value-display" id="clb_cruAltD">6000</div>
+          <input type="range" id="clb_cruAlt" min="0" max="12000" step="100" value="6000">
+          <div class="range-labels"><span>SL</span><span>12 000</span></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>OAT</span><span class="input-unit">°C</span></div>
+          <div class="input-value-display" id="clb_cruTempD">3</div>
+          <input type="range" id="clb_cruTemp" min="-40" max="50" step="1" value="3">
+          <div class="range-labels"><span>-40</span><span>+50</span></div>
+        </div>
+        <div class="isa-indicator std" id="clb_cruIsa">ISA ±0°C</div>
+      </div>
+
+      <div class="panel full">
+        <div class="panel-label">Mixture</div>
+        <div class="toggle-row">
+          <button class="toggle-btn active" data-clbmix="leaned" onclick="setClimbMix('leaned')">Leaned 100°F ROP</button>
+          <button class="toggle-btn" data-clbmix="rich" onclick="setClimbMix('rich')">Full Rich</button>
+        </div>
+        <div class="conditions" style="margin-top:0.75rem;">
+          <span>76 KIAS</span><span>Full Throttle</span><span>2550 lbs</span>
+        </div>
+      </div>
+
+      <div class="panel full">
+        <div class="panel-label">Resultat — Climb</div>
+        <div class="results-grid">
+          <div class="result-card time">
+            <div class="result-icon">⏱</div>
+            <div class="result-title">Tid</div>
+            <div class="result-value" id="clb_resTime">—</div>
+            <div class="result-unit">minuter</div>
+          </div>
+          <div class="result-card distance">
+            <div class="result-icon">📏</div>
+            <div class="result-title">Distans</div>
+            <div class="result-value" id="clb_resDist">—</div>
+            <div class="result-unit">NM</div>
+          </div>
+          <div class="result-card fuel">
+            <div class="result-icon">⛽</div>
+            <div class="result-title">Bränsle</div>
+            <div class="result-value" id="clb_resFuel">—</div>
+            <div class="result-unit">liter</div>
+          </div>
+        </div>
+        <div class="breakdown">
+          <div class="breakdown-title">Beräkningsdetaljer (kumulativt från sea level)</div>
+          <div class="breakdown-row"><span class="label">Till cruise altitude</span><span class="val" id="clb_bdCru">—</span></div>
+          <div class="breakdown-row"><span class="label">Till departure altitude</span><span class="val" id="clb_bdDep">—</span></div>
+          <div class="breakdown-row highlight"><span class="label">Netto (cruise − departure)</span><span class="val" id="clb_bdNet">—</span></div>
+        </div>
+        <div class="note">
+          <strong>Obs:</strong> Inkluderar bränsletillägg för start, taxi och takeoff.
+          Interpolerade värden från POH-diagram — använd alltid originalkällan för operativ flygplanering.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ CRUISE TAB ═══════════════ -->
+  <div class="tab-content" id="tab-cruise">
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-label">Förhållanden</div>
+        <div class="input-group">
+          <div class="input-label"><span>Cruise Pressure Altitude</span><span class="input-unit">ft</span></div>
+          <div class="input-value-display" id="cru_altD">6000</div>
+          <input type="range" id="cru_alt" min="0" max="12000" step="500" value="6000">
+          <div class="range-labels"><span>SL</span><span>12 000</span></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>OAT</span><span class="input-unit">°C</span></div>
+          <div class="input-value-display" id="cru_tempD">3</div>
+          <input type="range" id="cru_temp" min="-40" max="50" step="1" value="3">
+          <div class="range-labels"><span>-40</span><span>+50</span></div>
+        </div>
+        <div class="isa-indicator std" id="cru_isa">ISA ±0°C</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Inställningar</div>
+        <div class="input-group">
+          <div class="input-label"><span>Power Setting</span><span class="input-unit">%</span></div>
+          <div class="input-value-display" id="cru_powerD">65</div>
+          <input type="range" id="cru_power" min="55" max="75" step="5" value="65">
+          <div class="range-labels"><span>55%</span><span>75%</span></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Mixture</span></div>
+          <div class="toggle-row">
+            <button class="toggle-btn" data-crumix="best_power" onclick="setCruMix('best_power')">Best Power</button>
+            <button class="toggle-btn active" data-crumix="economy" onclick="setCruMix('economy')">Best Economy</button>
+          </div>
+        </div>
+        <div class="input-group" style="margin-top:1rem;">
+          <label class="fairings-check">
+            <input type="checkbox" id="cru_fairings" checked>
+            Wheel fairings installed
+          </label>
+          <div style="font-size:0.7rem; color:var(--text-dim); margin-top:0.35rem; margin-left:1.6rem;">
+            Utan fairings: −8 kts TAS
+          </div>
+        </div>
+        <div class="conditions" style="margin-top:0.75rem;">
+          <span>2550 lbs</span><span>Leaned to peak EGT (economy) / 100°F ROP (best power)</span>
+        </div>
+      </div>
+
+      <div class="panel full">
+        <div class="panel-label">Resultat — Cruise</div>
+        <div class="results-grid-4">
+          <div class="result-card tas">
+            <div class="result-icon">💨</div>
+            <div class="result-title">TAS</div>
+            <div class="result-value" id="cru_resTas">—</div>
+            <div class="result-unit">knop</div>
+          </div>
+          <div class="result-card rpm">
+            <div class="result-icon">⚙</div>
+            <div class="result-title">RPM</div>
+            <div class="result-value" id="cru_resRpm">—</div>
+            <div class="result-unit">varv/min</div>
+          </div>
+          <div class="result-card ff">
+            <div class="result-icon">🔥</div>
+            <div class="result-title">Fuel Flow</div>
+            <div class="result-value" id="cru_resFf">—</div>
+            <div class="result-unit">liter/timme</div>
+          </div>
+          <div class="result-card fuel">
+            <div class="result-icon">⛽</div>
+            <div class="result-title">Räckvidd</div>
+            <div class="result-value" id="cru_resRange">—</div>
+            <div class="result-unit">NM (48 USG)</div>
+          </div>
+        </div>
+        <div class="note" style="margin-top:1.25rem;">
+          <strong>Speed Power (Economy Cruise):</strong> Best economy mixture leaned to peak EGT. Wheel fairings installed, 2550 lbs.<br>
+          <strong>Engine Performance:</strong> Best power mixture leaned 100°F ROP. Fuel flow och RPM per power setting.<br>
+          Räckvidd baserad på 48 US gallon totalt med 45 min VFR-reserv (vid aktuell fuel flow).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ DESCENT TAB ═══════════════ -->
+  <div class="tab-content" id="tab-descent">
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-label">Cruise / TOD</div>
+        <div class="input-group">
+          <div class="input-label"><span>Cruise Pressure Altitude</span><span class="input-unit">ft</span></div>
+          <div class="input-value-display" id="des_cruAltD">6000</div>
+          <input type="range" id="des_cruAlt" min="0" max="12000" step="100" value="6000">
+          <div class="range-labels"><span>SL</span><span>12 000</span></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Cruise OAT</span><span class="input-unit">°C</span></div>
+          <div class="input-value-display" id="des_cruTempD">13</div>
+          <input type="range" id="des_cruTemp" min="-40" max="50" step="1" value="13">
+          <div class="range-labels"><span>-40</span><span>+50</span></div>
+        </div>
+        <div class="isa-indicator std" id="des_cruIsa">ISA ±0°C</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Destination</div>
+        <div class="input-group">
+          <div class="input-label"><span>Pressure Altitude</span><span class="input-unit">ft</span></div>
+          <div class="input-value-display" id="des_destAltD">2300</div>
+          <input type="range" id="des_destAlt" min="0" max="12000" step="100" value="2300">
+          <div class="range-labels"><span>SL</span><span>12 000</span></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>OAT</span><span class="input-unit">°C</span></div>
+          <div class="input-value-display" id="des_destTempD">21</div>
+          <input type="range" id="des_destTemp" min="-40" max="50" step="1" value="21">
+          <div class="range-labels"><span>-40</span><span>+50</span></div>
+        </div>
+        <div class="isa-indicator std" id="des_destIsa">ISA ±0°C</div>
+      </div>
+
+      <div class="panel full">
+        <div class="panel-label" style="margin-bottom:0.5rem;">Förutsättningar</div>
+        <div class="conditions">
+          <span>122 KIAS</span><span>2500 RPM</span><span>2550 lbs</span>
+        </div>
+      </div>
+
+      <div class="panel full">
+        <div class="panel-label">Resultat — Descent</div>
+        <div class="results-grid">
+          <div class="result-card time">
+            <div class="result-icon">⏱</div>
+            <div class="result-title">Tid</div>
+            <div class="result-value" id="des_resTime">—</div>
+            <div class="result-unit">minuter</div>
+          </div>
+          <div class="result-card distance">
+            <div class="result-icon">📏</div>
+            <div class="result-title">Distans</div>
+            <div class="result-value" id="des_resDist">—</div>
+            <div class="result-unit">NM</div>
+          </div>
+          <div class="result-card fuel">
+            <div class="result-icon">⛽</div>
+            <div class="result-title">Bränsle</div>
+            <div class="result-value" id="des_resFuel">—</div>
+            <div class="result-unit">liter</div>
+          </div>
+        </div>
+        <div class="breakdown">
+          <div class="breakdown-title">Beräkningsdetaljer (kumulativt från sea level)</div>
+          <div class="breakdown-row"><span class="label">Från cruise altitude</span><span class="val" id="des_bdCru">—</span></div>
+          <div class="breakdown-row"><span class="label">Från destination altitude</span><span class="val" id="des_bdDest">—</span></div>
+          <div class="breakdown-row highlight"><span class="label">Netto (cruise − destination)</span><span class="val" id="des_bdNet">—</span></div>
+        </div>
+        <div class="note">
+          <strong>Obs:</strong> Nedstigning vid 122 KIAS, 2500 RPM, 2550 lbs bruttovikt.
+          Interpolerade värden från POH-diagram — använd alltid originalkällan för operativ flygplanering.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAL_TO_L = 3.7854;
+const TOTAL_FUEL_GAL = 48;
+
+// ═══════════════════════════════════════════
+// CLIMB DATA (cumulative from sea level, ISA)
+// ═══════════════════════════════════════════
+const climbLeaned = {
+  0:     { time: 0,    fuel: 0,    dist: 0 },
+  1000:  { time: 2,    fuel: 0.4,  dist: 2.5 },
+  2000:  { time: 4,    fuel: 0.8,  dist: 5 },
+  3000:  { time: 6,    fuel: 1.2,  dist: 8 },
+  4000:  { time: 8.5,  fuel: 1.6,  dist: 11 },
+  5000:  { time: 11,   fuel: 2.0,  dist: 14.5 },
+  6000:  { time: 13.5, fuel: 2.5,  dist: 18.5 },
+  7000:  { time: 16.5, fuel: 3.0,  dist: 23 },
+  8000:  { time: 20,   fuel: 3.5,  dist: 28 },
+  9000:  { time: 24,   fuel: 4.2,  dist: 34 },
+  10000: { time: 29,   fuel: 5.0,  dist: 41 },
+  11000: { time: 35,   fuel: 6.0,  dist: 50 },
+  12000: { time: 43,   fuel: 7.2,  dist: 62 }
+};
+
+const climbRich = {
+  0:     { time: 0,    fuel: 0,    dist: 0 },
+  1000:  { time: 2,    fuel: 0.5,  dist: 2.5 },
+  2000:  { time: 4,    fuel: 1.0,  dist: 5 },
+  3000:  { time: 6.5,  fuel: 1.5,  dist: 8.5 },
+  4000:  { time: 9,    fuel: 2.0,  dist: 12 },
+  5000:  { time: 11.5, fuel: 2.6,  dist: 15.5 },
+  6000:  { time: 14.5, fuel: 3.2,  dist: 20 },
+  7000:  { time: 18,   fuel: 3.8,  dist: 25 },
+  8000:  { time: 22,   fuel: 4.5,  dist: 31 },
+  9000:  { time: 26.5, fuel: 5.3,  dist: 38 },
+  10000: { time: 32,   fuel: 6.2,  dist: 46 },
+  11000: { time: 39,   fuel: 7.4,  dist: 56 },
+  12000: { time: 48,   fuel: 8.8,  dist: 70 }
+};
+
+// ═══════════════════════════════════════════
+// DESCENT DATA (cumulative from sea level, ISA)
+// 122 KIAS, 2500 RPM, 2550 lbs
+// Extracted from Time, Distance and Fuel to Descend chart
+// Same subtraction method as climb: cruise_val − dest_val
+// ═══════════════════════════════════════════
+const descentData = {
+  0:     { time: 0,    fuel: 0,    dist: 0 },
+  1000:  { time: 3,    fuel: 0.4,  dist: 5.5 },
+  2000:  { time: 6,    fuel: 0.8,  dist: 11 },
+  3000:  { time: 8.5,  fuel: 1.1,  dist: 16 },
+  4000:  { time: 10.5, fuel: 1.4,  dist: 21 },
+  5000:  { time: 13,   fuel: 1.7,  dist: 27 },
+  6000:  { time: 15.5, fuel: 2.0,  dist: 33 },
+  7000:  { time: 18,   fuel: 2.3,  dist: 38 },
+  8000:  { time: 21,   fuel: 2.6,  dist: 44 },
+  9000:  { time: 23.5, fuel: 3.0,  dist: 49 },
+  10000: { time: 26,   fuel: 3.4,  dist: 54 },
+  11000: { time: 29,   fuel: 3.8,  dist: 60 },
+  12000: { time: 32,   fuel: 4.2,  dist: 66 }
+};
+// The POH charts work by: OAT + pressure alt → density alt → result
+//
+// Verified anchor points:
+//   DA≈1200 (3000ft/-6°C), 65% → TAS 110 kt
+//   DA≈5500 (5500ft/4°C),  65% → TAS ~116 kt (chart example)
+//   DA≈6470 (6000ft/13°C), 65% → TAS ~116 kt (chart example)
+//
+// Speed Power - Economy Cruise: TAS by density alt & power
+// ═══════════════════════════════════════════
+const cruiseTAS = {
+  // { densityAlt: { power%: TAS_kts } }
+  // Economy cruise, wheel fairings, 2550 lbs
+  // Anchor: DA≈1200, 65% → 110 kt;  DA≈7200, 65% → 116 kt
+  0:     { 55: 97,  65: 108 },
+  2000:  { 55: 99,  65: 111 },
+  4000:  { 55: 101, 65: 113 },
+  6000:  { 55: 103, 65: 115 },
+  8000:  { 55: 106, 65: 117 },
+  10000: { 55: 109, 65: 120 },
+  12000: { 55: 113, 65: 124 }
+};
+
+// ═══════════════════════════════════════════
+// ENGINE PERFORMANCE — RPM by density alt & power
+// Best Power mixture (100°F ROP)
+// Higher density alt → higher RPM needed for same power
+//
+// Verified:
+//   DA≈1200, 65% → 2350 RPM
+//   DA≈5500, 65% → 2450 RPM
+// ═══════════════════════════════════════════
+const cruiseRPM = {
+  // { densityAlt: { power%: RPM } }
+  0:     { 55: 2170, 60: 2240, 65: 2320, 70: 2400, 75: 2470 },
+  2000:  { 55: 2200, 60: 2275, 65: 2365, 70: 2435, 75: 2505 },
+  4000:  { 55: 2230, 60: 2310, 65: 2410, 70: 2470, 75: 2540 },
+  6000:  { 55: 2260, 60: 2350, 65: 2460, 70: 2520, 75: 2580 },
+  8000:  { 55: 2300, 60: 2400, 65: 2500, 70: 2570, 75: 2630 },
+  10000: { 55: 2350, 60: 2450, 65: 2560, 70: 2630, 75: 2680 },
+  12000: { 55: 2420, 60: 2520, 65: 2620, 70: 2690, 75: 2720 }
+};
+
+// Fuel flow gallons per hour from POH table
+// Best Power (100°F ROP) and Best Economy (peak EGT)
+const fuelFlow = {
+  55: { best_power: 7.8,  economy: 6.3 },
+  60: { best_power: 8.4,  economy: 6.9 },
+  65: { best_power: 9.0,  economy: 7.6 },
+  70: { best_power: 9.8,  economy: 8.2 },
+  75: { best_power: 10.5, economy: 8.8 }
+};
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let climbMix = 'leaned';
+let cruMix = 'economy';
+
+function getISA(alt) { return 15 - (alt * 1.98 / 1000); }
+
+function updateISA(id, alt, oat) {
+  const el = document.getElementById(id);
+  const dev = oat - getISA(alt);
+  el.textContent = `ISA ${dev >= 0 ? '+' : ''}${dev.toFixed(0)}°C`;
+  el.className = 'isa-indicator ' + (Math.abs(dev) < 2 ? 'std' : (dev > 0 ? 'warm' : 'cold'));
+}
+
+function lerp(data, alt) {
+  const alts = Object.keys(data).map(Number).sort((a,b) => a - b);
+  if (alt <= alts[0]) return { ...data[alts[0]] };
+  if (alt >= alts[alts.length - 1]) return { ...data[alts[alts.length - 1]] };
+  let lo, hi;
+  for (let i = 0; i < alts.length - 1; i++) {
+    if (alt >= alts[i] && alt <= alts[i + 1]) { lo = alts[i]; hi = alts[i + 1]; break; }
+  }
+  const t = (alt - lo) / (hi - lo);
+  const a = data[lo], b = data[hi];
+  const result = {};
+  for (const k of Object.keys(a)) {
+    if (typeof a[k] === 'number') result[k] = a[k] + t * (b[k] - a[k]);
+    else result[k] = a[k];
+  }
+  return result;
+}
+
+function lerpNested(data, alt, power) {
+  const alts = Object.keys(data).map(Number).sort((a,b) => a - b);
+  // Clamp altitude
+  const clampedAlt = Math.max(alts[0], Math.min(alt, alts[alts.length - 1]));
+
+  // Find bounding altitudes
+  let loAlt = alts[0], hiAlt = alts[alts.length - 1];
+  for (let i = 0; i < alts.length - 1; i++) {
+    if (clampedAlt >= alts[i] && clampedAlt <= alts[i + 1]) { loAlt = alts[i]; hiAlt = alts[i + 1]; break; }
+  }
+  const tAlt = hiAlt === loAlt ? 0 : (clampedAlt - loAlt) / (hiAlt - loAlt);
+
+  // Get power keys at each altitude
+  function interpPower(obj, pwr) {
+    const pkeys = Object.keys(obj).map(Number).sort((a,b) => a - b);
+    const cp = Math.max(pkeys[0], Math.min(pwr, pkeys[pkeys.length - 1]));
+    let lp = pkeys[0], hp = pkeys[pkeys.length - 1];
+    for (let i = 0; i < pkeys.length - 1; i++) {
+      if (cp >= pkeys[i] && cp <= pkeys[i + 1]) { lp = pkeys[i]; hp = pkeys[i + 1]; break; }
+    }
+    const tp = hp === lp ? 0 : (cp - lp) / (hp - lp);
+    return obj[lp] + tp * (obj[hp] - obj[lp]);
+  }
+
+  const vLo = interpPower(data[loAlt], power);
+  const vHi = interpPower(data[hiAlt], power);
+  return vLo + tAlt * (vHi - vLo);
+}
+
+function interpFF(power, mix) {
+  const pkeys = Object.keys(fuelFlow).map(Number).sort((a,b) => a - b);
+  const cp = Math.max(pkeys[0], Math.min(power, pkeys[pkeys.length - 1]));
+  let lo = pkeys[0], hi = pkeys[pkeys.length - 1];
+  for (let i = 0; i < pkeys.length - 1; i++) {
+    if (cp >= pkeys[i] && cp <= pkeys[i + 1]) { lo = pkeys[i]; hi = pkeys[i + 1]; break; }
+  }
+  const t = hi === lo ? 0 : (cp - lo) / (hi - lo);
+  return fuelFlow[lo][mix] + t * (fuelFlow[hi][mix] - fuelFlow[lo][mix]);
+}
+
+// ═══════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+// CLIMB CALC
+// ═══════════════════════════════════════════
+function setClimbMix(m) {
+  climbMix = m;
+  document.querySelectorAll('[data-clbmix]').forEach(b => b.classList.toggle('active', b.dataset.clbmix === m));
+  calcClimb();
+}
+
+function calcClimb() {
+  const depAlt = +document.getElementById('clb_depAlt').value;
+  const depTemp = +document.getElementById('clb_depTemp').value;
+  const cruAlt = +document.getElementById('clb_cruAlt').value;
+  const cruTemp = +document.getElementById('clb_cruTemp').value;
+
+  document.getElementById('clb_depAltD').textContent = depAlt.toLocaleString();
+  document.getElementById('clb_depTempD').textContent = (depTemp >= 0 ? '+' : '') + depTemp;
+  document.getElementById('clb_cruAltD').textContent = cruAlt.toLocaleString();
+  document.getElementById('clb_cruTempD').textContent = (cruTemp >= 0 ? '+' : '') + cruTemp;
+
+  updateISA('clb_depIsa', depAlt, depTemp);
+  updateISA('clb_cruIsa', cruAlt, cruTemp);
+
+  const data = climbMix === 'leaned' ? climbLeaned : climbRich;
+  const cruBase = lerp(data, cruAlt);
+  const depBase = lerp(data, depAlt);
+
+  // Temp correction
+  const cruDev = cruTemp - getISA(cruAlt);
+  const depDev = depTemp - getISA(depAlt);
+  const cruF = 1 + cruDev * 0.01;
+  const depF = 1 + depDev * 0.01;
+
+  const cru = { time: cruBase.time * cruF, fuel: cruBase.fuel * cruF, dist: cruBase.dist * cruF };
+  const dep = { time: depBase.time * depF, fuel: depBase.fuel * depF, dist: depBase.dist * depF };
+
+  let nt = cru.time - dep.time, nd = cru.dist - dep.dist, nf = cru.fuel - dep.fuel;
+  if (cruAlt <= depAlt) { nt = 0; nd = 0; nf = 0; }
+
+  document.getElementById('clb_resTime').textContent = nt.toFixed(1);
+  document.getElementById('clb_resDist').textContent = nd.toFixed(1);
+  document.getElementById('clb_resFuel').textContent = (nf * GAL_TO_L).toFixed(1);
+
+  document.getElementById('clb_bdCru').textContent = `${cru.time.toFixed(1)} min / ${cru.dist.toFixed(1)} nm / ${(cru.fuel * GAL_TO_L).toFixed(1)} L`;
+  document.getElementById('clb_bdDep').textContent = `${dep.time.toFixed(1)} min / ${dep.dist.toFixed(1)} nm / ${(dep.fuel * GAL_TO_L).toFixed(1)} L`;
+  document.getElementById('clb_bdNet').textContent = `${nt.toFixed(1)} min / ${nd.toFixed(1)} nm / ${(nf * GAL_TO_L).toFixed(1)} L`;
+}
+
+// ═══════════════════════════════════════════
+// CRUISE CALC
+// ═══════════════════════════════════════════
+function setCruMix(m) {
+  cruMix = m;
+  document.querySelectorAll('[data-crumix]').forEach(b => b.classList.toggle('active', b.dataset.crumix === m));
+  calcCruise();
+}
+
+function calcCruise() {
+  const alt = +document.getElementById('cru_alt').value;
+  const temp = +document.getElementById('cru_temp').value;
+  const power = +document.getElementById('cru_power').value;
+  const fairings = document.getElementById('cru_fairings').checked;
+
+  document.getElementById('cru_altD').textContent = alt.toLocaleString();
+  document.getElementById('cru_tempD').textContent = (temp >= 0 ? '+' : '') + temp;
+  document.getElementById('cru_powerD').textContent = power;
+  updateISA('cru_isa', alt, temp);
+
+  // ── Compute density altitude ──
+  // DA = PA + 120 × (OAT − ISA_temp)
+  const isaTemp = getISA(alt);
+  const densAlt = alt + 120 * (temp - isaTemp);
+
+  // TAS from density altitude
+  let tas = lerpNested(cruiseTAS, densAlt, power);
+  if (!fairings) tas -= 8;
+
+  // RPM from density altitude
+  let rpm = lerpNested(cruiseRPM, densAlt, power);
+
+  // Fuel flow (not density-dependent, just power & mixture)
+  const ffGal = interpFF(power, cruMix);
+  const ffL = ffGal * GAL_TO_L;
+
+  // Range: usable fuel, minus 45 min reserve
+  const reserveGal = ffGal * 0.75; // 45 min
+  const usableGal = TOTAL_FUEL_GAL - reserveGal;
+  const enduranceHrs = usableGal / ffGal;
+  const range = enduranceHrs * tas;
+
+  document.getElementById('cru_resTas').textContent = Math.round(tas);
+  document.getElementById('cru_resRpm').textContent = Math.round(rpm / 10) * 10;
+  document.getElementById('cru_resFf').textContent = ffL.toFixed(1);
+  document.getElementById('cru_resRange').textContent = Math.round(range);
+}
+
+// ═══════════════════════════════════════════
+// DESCENT CALC
+// ═══════════════════════════════════════════
+function calcDescent() {
+  const cruAlt = +document.getElementById('des_cruAlt').value;
+  const cruTemp = +document.getElementById('des_cruTemp').value;
+  const destAlt = +document.getElementById('des_destAlt').value;
+  const destTemp = +document.getElementById('des_destTemp').value;
+
+  document.getElementById('des_cruAltD').textContent = cruAlt.toLocaleString();
+  document.getElementById('des_cruTempD').textContent = (cruTemp >= 0 ? '+' : '') + cruTemp;
+  document.getElementById('des_destAltD').textContent = destAlt.toLocaleString();
+  document.getElementById('des_destTempD').textContent = (destTemp >= 0 ? '+' : '') + destTemp;
+
+  updateISA('des_cruIsa', cruAlt, cruTemp);
+  updateISA('des_destIsa', destAlt, destTemp);
+
+  // Temperature correction same approach as climb
+  const cruBase = lerp(descentData, cruAlt);
+  const destBase = lerp(descentData, destAlt);
+
+  // Temperature correction - very light for descent
+  // The chart captures most temp effect through the OAT entry on left side
+  const cruDev = cruTemp - getISA(cruAlt);
+  const destDev = destTemp - getISA(destAlt);
+  const cruF = 1 + cruDev * 0.003;
+  const destF = 1 + destDev * 0.003;
+
+  const cru = { time: cruBase.time * cruF, fuel: cruBase.fuel * cruF, dist: cruBase.dist * cruF };
+  const dest = { time: destBase.time * destF, fuel: destBase.fuel * destF, dist: destBase.dist * destF };
+
+  let nt = cru.time - dest.time, nd = cru.dist - dest.dist, nf = cru.fuel - dest.fuel;
+  if (cruAlt <= destAlt) { nt = 0; nd = 0; nf = 0; }
+
+  document.getElementById('des_resTime').textContent = nt.toFixed(1);
+  document.getElementById('des_resDist').textContent = nd.toFixed(1);
+  document.getElementById('des_resFuel').textContent = (nf * GAL_TO_L).toFixed(1);
+
+  document.getElementById('des_bdCru').textContent = `${cru.time.toFixed(1)} min / ${cru.dist.toFixed(1)} nm / ${(cru.fuel * GAL_TO_L).toFixed(1)} L`;
+  document.getElementById('des_bdDest').textContent = `${dest.time.toFixed(1)} min / ${dest.dist.toFixed(1)} nm / ${(dest.fuel * GAL_TO_L).toFixed(1)} L`;
+  document.getElementById('des_bdNet').textContent = `${nt.toFixed(1)} min / ${nd.toFixed(1)} nm / ${(nf * GAL_TO_L).toFixed(1)} L`;
+}
+
+// Wire up
+['clb_depAlt', 'clb_depTemp', 'clb_cruAlt', 'clb_cruTemp'].forEach(id =>
+  document.getElementById(id).addEventListener('input', calcClimb));
+
+['cru_alt', 'cru_temp', 'cru_power'].forEach(id =>
+  document.getElementById(id).addEventListener('input', calcCruise));
+
+document.getElementById('cru_fairings').addEventListener('change', calcCruise);
+
+['des_cruAlt', 'des_cruTemp', 'des_destAlt', 'des_destTemp'].forEach(id =>
+  document.getElementById(id).addEventListener('input', calcDescent));
+
+// Init
+calcClimb();
+calcCruise();
+calcDescent();
+</script>
+</body>
+</html>

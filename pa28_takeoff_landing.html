@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PA-28-181 Takeoff & Landing</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0f1a; --card: #111827; --card-border: #1e293b; --accent: #f59e0b; --accent-dim: #92400e;
+  --text: #e2e8f0; --text-dim: #64748b; --text-bright: #f8fafc; --green: #10b981; --red: #ef4444;
+  --blue: #3b82f6; --purple: #a78bfa; --cyan: #22d3ee; --input-bg: #1e293b; --input-border: #334155;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(245,158,11,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(245,158,11,.03) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+.app { position:relative; z-index:1; max-width:900px; margin:0 auto; padding:2rem 1.5rem 4rem; }
+header { text-align:center; margin-bottom:2rem; }
+.aircraft-badge { display:inline-flex; align-items:center; gap:.5rem; background:linear-gradient(135deg,var(--accent-dim),transparent); border:1px solid var(--accent); border-radius:6px; padding:.35rem 1rem; font-family:'IBM Plex Mono',monospace; font-size:.8rem; font-weight:600; color:var(--accent); letter-spacing:.1em; text-transform:uppercase; margin-bottom:1rem; }
+.aircraft-badge svg { width:16px; height:16px; fill:var(--accent); }
+h1 { font-family:'IBM Plex Mono',monospace; font-size:1.5rem; font-weight:700; color:var(--text-bright); letter-spacing:-.02em; margin-bottom:.4rem; }
+.subtitle { font-size:.85rem; color:var(--text-dim); }
+.tab-bar { display:flex; gap:0; margin-bottom:1.5rem; background:var(--card); border:1px solid var(--card-border); border-radius:10px; overflow:hidden; }
+.tab-btn { flex:1; padding:.85rem 1rem; border:none; background:transparent; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; font-size:.75rem; font-weight:600; cursor:pointer; transition:all .25s; letter-spacing:.06em; text-transform:uppercase; position:relative; }
+.tab-btn.active { background:rgba(245,158,11,.12); color:var(--accent); }
+.tab-btn.active::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:var(--accent); }
+.tab-btn:hover:not(.active) { color:var(--text); background:rgba(255,255,255,.03); }
+.tab-content { display:none; } .tab-content.active { display:block; }
+.conditions { display:inline-flex; flex-wrap:wrap; gap:.5rem; margin-top:.75rem; font-family:'IBM Plex Mono',monospace; font-size:.7rem; color:var(--text-dim); letter-spacing:.05em; justify-content:center; }
+.conditions span { background:var(--card); border:1px solid var(--card-border); padding:.25rem .6rem; border-radius:4px; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem; }
+@media(max-width:700px){ .grid-2{grid-template-columns:1fr} }
+.full { grid-column:1/-1; }
+.panel { background:var(--card); border:1px solid var(--card-border); border-radius:12px; padding:1.5rem; }
+.panel-label { font-family:'IBM Plex Mono',monospace; font-size:.65rem; font-weight:600; color:var(--text-dim); letter-spacing:.15em; text-transform:uppercase; margin-bottom:1.25rem; display:flex; align-items:center; gap:.5rem; }
+.panel-label::before { content:''; width:8px; height:8px; border-radius:2px; background:var(--accent); }
+.input-group { margin-bottom:1.25rem; } .input-group:last-child { margin-bottom:0; }
+.input-label { display:flex; justify-content:space-between; align-items:baseline; font-size:.8rem; color:var(--text); margin-bottom:.5rem; font-weight:500; }
+.input-unit { font-family:'IBM Plex Mono',monospace; font-size:.7rem; color:var(--text-dim); }
+.input-value-display { font-family:'IBM Plex Mono',monospace; font-size:1.3rem; font-weight:700; color:var(--accent); text-align:center; margin-bottom:.5rem; }
+input[type="range"] { -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:3px; background:var(--input-bg); outline:none; cursor:pointer; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:var(--accent); border:3px solid var(--bg); box-shadow:0 0 0 1px var(--accent),0 2px 8px rgba(0,0,0,.4); cursor:pointer; transition:transform .15s; }
+input[type="range"]::-webkit-slider-thumb:hover { transform:scale(1.15); }
+.range-labels { display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:.6rem; color:var(--text-dim); margin-top:.25rem; }
+.toggle-row { display:flex; background:var(--input-bg); border:1px solid var(--card-border); border-radius:8px; overflow:hidden; }
+.toggle-btn { flex:1; padding:.6rem .5rem; border:none; background:transparent; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; font-size:.7rem; font-weight:600; cursor:pointer; transition:all .25s; letter-spacing:.03em; }
+.toggle-btn.active { background:var(--accent); color:var(--bg); }
+.toggle-btn:hover:not(.active) { color:var(--text); background:rgba(245,158,11,.1); }
+.isa-indicator { display:flex; align-items:center; justify-content:center; gap:.4rem; font-family:'IBM Plex Mono',monospace; font-size:.7rem; margin-top:.5rem; padding:.35rem .6rem; border-radius:4px; background:var(--input-bg); }
+.isa-indicator.warm { color:var(--red); border:1px solid rgba(239,68,68,.3); }
+.isa-indicator.cold { color:var(--blue); border:1px solid rgba(59,130,246,.3); }
+.isa-indicator.std { color:var(--green); border:1px solid rgba(16,185,129,.3); }
+.result-section { margin-bottom:1.5rem; }
+.result-section-title { font-family:'IBM Plex Mono',monospace; font-size:.7rem; font-weight:600; color:var(--text-dim); letter-spacing:.12em; text-transform:uppercase; margin-bottom:1rem; display:flex; align-items:center; gap:.5rem; }
+.flap-tag { padding:.2rem .5rem; border-radius:4px; font-size:.65rem; }
+.flap-tag.clean { background:rgba(59,130,246,.15); color:var(--blue); }
+.flap-tag.f25 { background:rgba(16,185,129,.15); color:var(--green); }
+.flap-tag.f40 { background:rgba(167,139,250,.15); color:var(--purple); }
+.result-pair { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem; }
+@media(max-width:600px){ .result-pair{grid-template-columns:1fr} .speed-grid{grid-template-columns:repeat(2,1fr)!important} }
+.result-card { background:var(--input-bg); border:1px solid var(--card-border); border-radius:10px; padding:1.25rem; text-align:center; position:relative; overflow:hidden; transition:border-color .3s,transform .2s; }
+.result-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+.result-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.result-card.gr::after { background:var(--accent); } .result-card.ob::after { background:var(--cyan); }
+.result-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin:0 auto .75rem; font-size:1.1rem; }
+.result-card.gr .result-icon { background:rgba(245,158,11,.15); } .result-card.ob .result-icon { background:rgba(34,211,238,.15); }
+.result-title { font-size:.7rem; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.1em; font-family:'IBM Plex Mono',monospace; margin-bottom:.5rem; }
+.result-value { font-family:'IBM Plex Mono',monospace; font-size:2rem; font-weight:700; line-height:1; margin-bottom:.25rem; }
+.result-card.gr .result-value { color:var(--accent); } .result-card.ob .result-value { color:var(--cyan); }
+.result-sub { font-family:'IBM Plex Mono',monospace; font-size:.7rem; color:var(--text-dim); }
+.result-unit { font-family:'IBM Plex Mono',monospace; font-size:.7rem; color:var(--text-dim); }
+.speed-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.75rem; }
+.speed-card { background:var(--input-bg); border:1px solid var(--card-border); border-radius:8px; padding:.75rem; text-align:center; }
+.speed-label { font-family:'IBM Plex Mono',monospace; font-size:.6rem; font-weight:600; color:var(--text-dim); letter-spacing:.08em; text-transform:uppercase; margin-bottom:.35rem; }
+.speed-val { font-family:'IBM Plex Mono',monospace; font-size:1.4rem; font-weight:700; color:var(--text-bright); }
+.speed-unit { font-family:'IBM Plex Mono',monospace; font-size:.6rem; color:var(--text-dim); }
+.note { margin-top:1.5rem; padding:1rem; background:rgba(245,158,11,.05); border:1px solid rgba(245,158,11,.15); border-radius:8px; font-size:.75rem; color:var(--text-dim); line-height:1.6; }
+.note strong { color:var(--accent); }
+.warnings { margin-bottom:1rem; }
+.warn-box { padding:.75rem 1rem; border-radius:8px; font-size:.8rem; margin-bottom:.5rem; font-family:'IBM Plex Mono',monospace; font-weight:500; }
+.warn-box.w { background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.25); color:var(--accent); }
+.warn-box.d { background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.25); color:var(--red); }
+.surface-options { display:flex; flex-direction:column; gap:.5rem; }
+.surface-opt { display:flex; align-items:center; gap:.75rem; padding:.65rem .85rem; background:var(--input-bg); border:1px solid var(--card-border); border-radius:8px; cursor:pointer; transition:all .2s; user-select:none; }
+.surface-opt:hover { border-color:var(--accent); }
+.surface-opt.active { border-color:var(--accent); background:rgba(245,158,11,.08); }
+.surface-opt input[type="radio"] { display:none; }
+.surface-dot { width:16px; height:16px; border-radius:50%; border:2px solid var(--input-border); flex-shrink:0; position:relative; transition:border-color .2s; }
+.surface-opt.active .surface-dot { border-color:var(--accent); }
+.surface-opt.active .surface-dot::after { content:''; position:absolute; top:3px; left:3px; width:6px; height:6px; border-radius:50%; background:var(--accent); }
+.surface-info { flex:1; }
+.surface-name { font-size:.8rem; font-weight:600; color:var(--text); }
+.surface-desc { font-size:.68rem; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; margin-top:.15rem; }
+.surface-penalty { font-family:'IBM Plex Mono',monospace; font-size:.75rem; font-weight:600; color:var(--accent); white-space:nowrap; }
+.depth-control { margin-top:.75rem; padding:.85rem; background:var(--input-bg); border:1px solid var(--card-border); border-radius:8px; display:none; }
+.depth-control.visible { display:block; }
+input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}input[type="number"]{-moz-appearance:textfield}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="aircraft-badge"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>PA-28-181 Archer II</div>
+  <h1>Takeoff & Landing Performance</h1>
+  <p class="subtitle">Startprestanda & landningssträcka från POH</p>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('to')">⬆ Takeoff</button>
+  <button class="tab-btn" onclick="switchTab('ld')">⬇ Landing</button>
+</div>
+
+<!-- ═══════════ TAKEOFF TAB ═══════════ -->
+<div class="tab-content active" id="tab-to">
+<div class="conditions" style="margin-bottom:1.5rem"><span>Full gas före bromssläpp</span><span>Asfalt</span><span>Plant</span><span>Torrt</span></div>
+<div class="grid-2">
+  <div class="panel">
+    <div class="panel-label">Temperatur & Höjd</div>
+    <div class="input-group"><div class="input-label"><span>OAT</span><span class="input-unit">°C</span></div><div class="input-value-display" id="to_oatD">15</div><input type="range" id="to_oat" min="-40" max="50" step="1" value="15"><div class="range-labels"><span>-40</span><span>+50</span></div></div>
+    <div class="input-group"><div class="input-label"><span>Pressure Altitude</span><span class="input-unit">ft</span></div><div class="input-value-display" id="to_paD">0</div><input type="range" id="to_pa" min="0" max="7000" step="100" value="0"><div class="range-labels"><span>SL</span><span>7 000</span></div></div>
+    <div class="isa-indicator std" id="to_isa">ISA ±0°C</div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">Vikt & Vind</div>
+    <div class="input-group"><div class="input-label"><span>Bruttovikt</span><span class="input-unit">kg</span></div><div class="input-value-display" id="to_wtD">1100</div><input type="range" id="to_wt" min="930" max="1157" step="5" value="1100"><div class="range-labels"><span>930</span><span>1157 (MTOW)</span></div></div>
+    <div class="input-group"><div class="input-label"><span>Vindriktning</span></div><div class="toggle-row"><button class="toggle-btn active" id="to_bh" onclick="toSw('h')">Motvind</button><button class="toggle-btn" id="to_bt" onclick="toSw('t')">Medvind</button></div></div>
+    <div class="input-group"><div class="input-label"><span>Vindstyrka</span><span class="input-unit">kt</span></div><div class="input-value-display" id="to_wnD">0</div><input type="range" id="to_wn" min="0" max="15" step="1" value="0"><div class="range-labels"><span>0</span><span>15</span></div></div>
+  </div>
+</div>
+<div class="panel full" style="margin-bottom:1.5rem">
+  <div class="panel-label">Banförhållanden (tumregler)</div>
+  <div class="surface-options" id="to_surf_opts">
+    <label class="surface-opt active" onclick="setSurf('to','dry',this)"><input type="radio" name="to_s" checked><span class="surface-dot"></span><span class="surface-info"><span class="surface-name">Torr asfalt</span><span class="surface-desc">Paved, dry (POH-referens)</span></span><span class="surface-penalty">±0 %</span></label>
+    <label class="surface-opt" onclick="setSurf('to','grass',this)"><input type="radio" name="to_s"><span class="surface-dot"></span><span class="surface-info"><span class="surface-name">Hård kortklippt gräsyta</span><span class="surface-desc">5–10 cm grässtrån</span></span><span class="surface-penalty">+10 %</span></label>
+    <label class="surface-opt" onclick="setSurf('to','water',this)"><input type="radio" name="to_s"><span class="surface-dot"></span><span class="surface-info"><span class="surface-name">Vatten / slask</span><span class="surface-desc">Max 2,5 cm · +20 %/cm</span></span><span class="surface-penalty" id="to_waterP">+20 %</span></label>
+    <label class="surface-opt" onclick="setSurf('to','wetsnow',this)"><input type="radio" name="to_s"><span class="surface-dot"></span><span class="surface-info"><span class="surface-name">Tung / kramsnö</span><span class="surface-desc">Max 5 cm · +10 %/cm</span></span><span class="surface-penalty" id="to_wetsnowP">+10 %</span></label>
+    <label class="surface-opt" onclick="setSurf('to','powder',this)"><input type="radio" name="to_s"><span class="surface-dot"></span><span class="surface-info"><span class="surface-name">Pudersnö</span><span class="surface-desc">Max 10 cm · +5 %/cm</span></span><span class="surface-penalty" id="to_powderP">+5 %</span></label>
+  </div>
+  <div class="depth-control" id="to_depthCtrl"><div class="input-label"><span>Djup</span><span class="input-unit">cm</span></div><div class="input-value-display" id="to_depthD">1.0</div><input type="range" id="to_depth" min="0.5" max="2.5" step="0.5" value="1"><div class="range-labels" id="to_depthLbl"><span>0,5</span><span>2,5</span></div></div>
+</div>
+<div id="to_warn" class="warnings"></div>
+<div class="panel full" style="margin-bottom:1.5rem">
+  <div class="panel-label">Resultat — Startprestanda</div>
+  <div class="result-section"><div class="result-section-title"><span class="flap-tag clean">CLEAN</span> Flaps Up (0°)</div><div class="result-pair"><div class="result-card gr"><div class="result-icon">🛫</div><div class="result-title">Startrull</div><div class="result-value" id="r_fuGR">—</div><div class="result-unit">meter</div><div class="result-sub" id="r_fuGR_ft"></div></div><div class="result-card ob"><div class="result-icon">🏔</div><div class="result-title">Över 50 ft hinder</div><div class="result-value" id="r_fu50">—</div><div class="result-unit">meter</div><div class="result-sub" id="r_fu50_ft"></div></div></div></div>
+  <div class="result-section"><div class="result-section-title"><span class="flap-tag f25">FLAPS 25</span> 25° Flaps</div><div class="result-pair"><div class="result-card gr"><div class="result-icon">🛫</div><div class="result-title">Startrull</div><div class="result-value" id="r_f25GR">—</div><div class="result-unit">meter</div><div class="result-sub" id="r_f25GR_ft"></div></div><div class="result-card ob"><div class="result-icon">🏔</div><div class="result-title">Över 50 ft hinder</div><div class="result-value" id="r_f2550">—</div><div class="result-unit">meter</div><div class="result-sub" id="r_f2550_ft"></div></div></div></div>
+  <div class="panel-label" style="margin-top:1.5rem">Starthastigheter</div>
+  <div class="speed-grid"><div class="speed-card"><div class="speed-label">Flaps Up Liftoff</div><div class="speed-val" id="s_fuLO">—</div><div class="speed-unit">KIAS</div></div><div class="speed-card"><div class="speed-label">Flaps Up 50 ft</div><div class="speed-val" id="s_fu50">—</div><div class="speed-unit">KIAS</div></div><div class="speed-card"><div class="speed-label">25° Liftoff</div><div class="speed-val" id="s_f25LO">—</div><div class="speed-unit">KIAS</div></div><div class="speed-card"><div class="speed-label">25° Flaps 50 ft</div><div class="speed-val" id="s_f2550">—</div><div class="speed-unit">KIAS</div></div></div>
+  <div class="note"><strong>⚠ Ej för operativ flygning.</strong> Digitaliserade POH-diagram (Fig 5-7, 5-9, 5-11, 5-13), kalibrerade ±1%. Banförhållanden utöver torr asfalt är tumregler. Använd alltid originaldokumentationen.</div>
+</div>
+</div>
+
+<!-- ═══════════ LANDING TAB ═══════════ -->
+<div class="tab-content" id="tab-ld">
+<div class="conditions" style="margin-bottom:1.5rem"><span>Power off approach</span><span>40° Flaps</span><span>66 KIAS</span><span>Full stall touchdown</span><span>Max bromsning</span></div>
+<div class="grid-2">
+  <div class="panel">
+    <div class="panel-label">Temperatur & Höjd</div>
+    <div class="input-group"><div class="input-label"><span>OAT</span><span class="input-unit">°C</span></div><div class="input-value-display" id="ld_oatD">15</div><input type="range" id="ld_oat" min="-40" max="50" step="1" value="15"><div class="range-labels"><span>-40</span><span>+50</span></div></div>
+    <div class="input-group"><div class="input-label"><span>Pressure Altitude</span><span class="input-unit">ft</span></div><div class="input-value-display" id="ld_paD">0</div><input type="range" id="ld_pa" min="0" max="7000" step="100" value="0"><div class="range-labels"><span>SL</span><span>7 000</span></div></div>
+    <div class="isa-indicator std" id="ld_isa">ISA ±0°C</div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">Vikt & Vind</div>
+    <div class="input-group"><div class="input-label"><span>Bruttovikt</span><span class="input-unit">kg</span></div><div class="input-value-display" id="ld_wtD">1000</div><input type="range" id="ld_wt" min="800" max="1157" step="5" value="1000"><div class="range-labels"><span>800</span><span>1157</span></div></div>
+    <div class="input-group"><div class="input-label"><span>Vindriktning</span></div><div class="toggle-row"><button class="toggle-btn active" id="ld_bh" onclick="ldSw('h')">Motvind</button><button class="toggle-btn" id="ld_bt" onclick="ldSw('t')">Medvind</button></div></div>
+    <div class="input-group"><div class="input-label"><span>Vindstyrka</span><span class="input-unit">kt</span></div><div class="input-value-display" id="ld_wnD">0</div><input type="range" id="ld_wn" min="0" max="15" step="1" value="0"><div class="range-labels"><span>0</span><span>15</span></div></div>
+  </div>
+</div>
+<div class="panel full" style="margin-bottom:1.5rem">
+  <div class="panel-label">Banförhållanden (tumregler)</div>
+  <div class="surface-options" id="ld_surf_opts">
+    <label class="surface-opt active" onclick="setSurf('ld','dry',this)"><input type="radio" name="ld_s" checked><span class="surface-dot"></span><span class="surface-info"><span class="surface-name">Torr asfalt</span><span class="surface-desc">Paved, dry (POH-referens)</span></span><span class="surface-penalty">±0 %</span></label>
+    <label class="surface-opt" onclick="setSurf('ld','grass',this)"><input type="radio" name="ld_s"><span class="surface-dot"></span><span class="surface-info"><span class="surface-name">Hård kortklippt gräsyta</span><span class="surface-desc">5–10 cm grässtrån</span></span><span class="surface-penalty">+10 %</span></label>
+    <label class="surface-opt" onclick="setSurf('ld','water',this)"><input type="radio" name="ld_s"><span class="surface-dot"></span><span class="surface-info"><span class="surface-name">Vatten / slask</span><span class="surface-desc">Max 2,5 cm · +20 %/cm</span></span><span class="surface-penalty" id="ld_waterP">+20 %</span></label>
+    <label class="surface-opt" onclick="setSurf('ld','wetsnow',this)"><input type="radio" name="ld_s"><span class="surface-dot"></span><span class="surface-info"><span class="surface-name">Tung / kramsnö</span><span class="surface-desc">Max 5 cm · +10 %/cm</span></span><span class="surface-penalty" id="ld_wetsnowP">+10 %</span></label>
+    <label class="surface-opt" onclick="setSurf('ld','powder',this)"><input type="radio" name="ld_s"><span class="surface-dot"></span><span class="surface-info"><span class="surface-name">Pudersnö</span><span class="surface-desc">Max 10 cm · +5 %/cm</span></span><span class="surface-penalty" id="ld_powderP">+5 %</span></label>
+  </div>
+  <div class="depth-control" id="ld_depthCtrl"><div class="input-label"><span>Djup</span><span class="input-unit">cm</span></div><div class="input-value-display" id="ld_depthD">1.0</div><input type="range" id="ld_depth" min="0.5" max="2.5" step="0.5" value="1"><div class="range-labels" id="ld_depthLbl"><span>0,5</span><span>2,5</span></div></div>
+</div>
+<div id="ld_warn" class="warnings"></div>
+<div class="panel full">
+  <div class="panel-label">Resultat — Landningsprestanda</div>
+  <div class="result-section"><div class="result-section-title"><span class="flap-tag f40">40° FLAPS</span> Power Off Approach, 66 KIAS</div>
+    <div class="result-pair"><div class="result-card gr"><div class="result-icon">🛬</div><div class="result-title">Utrullning</div><div class="result-value" id="r_ldGR">—</div><div class="result-unit">meter</div><div class="result-sub" id="r_ldGR_ft"></div></div><div class="result-card ob"><div class="result-icon">🏔</div><div class="result-title">Över 50 ft hinder</div><div class="result-value" id="r_ld50">—</div><div class="result-unit">meter</div><div class="result-sub" id="r_ld50_ft"></div></div></div>
+  </div>
+  <div class="panel-label" style="margin-top:1.5rem">Approach Speed</div>
+  <div class="speed-grid" style="grid-template-columns:1fr 1fr">
+    <div class="speed-card"><div class="speed-label">Approach (Vref)</div><div class="speed-val">66</div><div class="speed-unit">KIAS</div></div>
+    <div class="speed-card"><div class="speed-label">Flaps</div><div class="speed-val">40°</div><div class="speed-unit">FULL</div></div>
+  </div>
+  <div class="note"><strong>⚠ Ej för operativ flygning.</strong> Digitaliserade POH-diagram (Fig 5-35, 5-37), kalibrerade ±1%. Banförhållanden utöver torr asfalt är tumregler. Använd alltid originaldokumentationen.</div>
+</div>
+</div>
+</div>
+
+<script>
+var $=function(id){return document.getElementById(id)};
+function lp(x,a,b,ya,yb){return b===a?ya:ya+(x-a)/(b-a)*(yb-ya)}
+function it(t,x){if(x<=t[0][0])return t[0][1];if(x>=t[t.length-1][0])return t[t.length-1][1];for(var i=0;i<t.length-1;i++)if(x>=t[i][0]&&x<=t[i+1][0])return lp(x,t[i][0],t[i+1][0],t[i][1],t[i+1][1]);return t[t.length-1][1]}
+function getISA(a){return 15-a*1.98/1000}
+function updISA(id,alt,oat){var d=oat-getISA(alt);$(id).textContent='ISA '+(d>=0?'+':'')+d.toFixed(0)+'°C';$(id).className='isa-indicator '+(Math.abs(d)<2?'std':(d>0?'warm':'cold'))}
+function bd(B,o,p){var as=Object.keys(B).map(Number).sort(function(a,b){return a-b}),cp=Math.max(as[0],Math.min(as[as.length-1],p)),lo=as[0],hi=as[0];for(var i=0;i<as.length-1;i++){if(cp>=as[i]&&cp<=as[i+1]){lo=as[i];hi=as[i+1];break}if(cp>as[i]){lo=as[i];hi=as[Math.min(i+1,as.length-1)]}}var dl=it(B[lo],o),dh=it(B[hi],o);return lo===hi?dl:lp(cp,lo,hi,dl,dh)}
+function fm(id,ft){var m=ft/3.28084;$(id).textContent=Math.round(m);$(id+'_ft').textContent=Math.round(ft)+' ft'}
+
+// ═══ TAKEOFF DATA ═══
+var TB1={0:[[-40,735],[-20,820],[0,920],[10,975],[20,1040],[30,1115],[40,1200]],1e3:[[-40,830],[-20,930],[0,1040],[10,1105],[20,1175],[30,1265],[40,1360]],2e3:[[-40,940],[-20,1060],[0,1185],[10,1260],[20,1340],[30,1440],[40,1550]],3e3:[[-40,1070],[-20,1205],[0,1345],[10,1435],[20,1525],[30,1640],[40,1770]],4e3:[[-40,1225],[-20,1375],[0,1540],[10,1640],[20,1745],[30,1880],[40,2030]],5e3:[[-40,1405],[-20,1580],[0,1770],[10,1885],[20,2005],[30,2160],[40,2330]],6e3:[[-40,1620],[-20,1820],[0,2040],[10,2170],[20,2315],[30,2490],[40,2400]],7e3:[[-40,1870],[-20,2100],[0,2355],[10,2510],[20,2400],[30,2400],[40,2400]]};
+var TB2={0:[[-40,622],[-20,699],[0,785],[10,836],[20,887],[30,959],[40,1035]],1e3:[[-40,709],[-20,796],[0,896],[10,952],[20,1015],[30,1097],[40,1185]],2e3:[[-40,811],[-20,914],[0,1025],[10,1091],[20,1163],[30,1255],[40,1357]],3e3:[[-40,928],[-20,1046],[0,1178],[10,1254],[20,1340],[30,1448],[40,1566]],4e3:[[-40,1072],[-20,1209],[0,1357],[10,1448],[20,1545],[30,1668],[40,1805]],5e3:[[-40,1239],[-20,1399],[0,1571],[10,1673],[20,1785],[30,1928],[40,2086]],6e3:[[-40,1438],[-20,1622],[0,1821],[10,1943],[20,2074],[30,2240],[40,2400]],7e3:[[-40,1673],[-20,1887],[0,2122],[10,2264],[20,2400],[30,2400],[40,2400]]};
+var TB3={0:[[-40,1370],[-20,1535],[0,1715],[10,1825],[20,1940],[30,2085],[40,2250]],1e3:[[-40,1560],[-20,1750],[0,1960],[10,2085],[20,2220],[30,2385],[40,2575]],2e3:[[-40,1785],[-20,2005],[0,2245],[10,2390],[20,2545],[30,2740],[40,2960]],3e3:[[-40,2050],[-20,2305],[0,2585],[10,2755],[20,2935],[30,3160],[40,3415]],4e3:[[-40,2370],[-20,2665],[0,2985],[10,3185],[20,3395],[30,3655],[40,3950]],5e3:[[-40,2745],[-20,3085],[0,3460],[10,3690],[20,3935],[30,4240],[40,4500]],6e3:[[-40,3195],[-20,3590],[0,4025],[10,4295],[20,4500],[30,4500],[40,4500]],7e3:[[-40,3730],[-20,4195],[0,4500],[10,4500],[20,4500],[30,4500],[40,4500]]};
+var TB4={0:[[-40,1188],[-20,1334],[0,1490],[10,1588],[20,1690],[30,1820],[40,1966]],1e3:[[-40,1361],[-20,1528],[0,1714],[10,1828],[20,1944],[30,2097],[40,2264]],2e3:[[-40,1561],[-20,1755],[0,1966],[10,2097],[20,2234],[30,2411],[40,2609]],3e3:[[-40,1798],[-20,2023],[0,2269],[10,2422],[20,2581],[30,2786],[40,3013]],4e3:[[-40,2084],[-20,2343],[0,2628],[10,2805],[20,2993],[30,3229],[40,3494]],5e3:[[-40,2419],[-20,2722],[0,3053],[10,3260],[20,3480],[30,3400],[40,3400]],6e3:[[-40,2819],[-20,3173],[0,3400],[10,3400],[20,3400],[30,3400],[40,3400]],7e3:[[-40,3300],[-20,3400],[0,3400],[10,3400],[20,3400],[30,3400],[40,3400]]};
+var TW1=[[2e3,.76],[2100,.80],[2200,.84],[2300,.89],[2400,.935],[2550,1]];
+var TW2=[[2e3,.74],[2100,.78],[2200,.83],[2300,.88],[2400,.935],[2550,1]];
+var TW3=[[2050,.73],[2150,.79],[2250,.86],[2350,.92],[2450,.96],[2550,1]];
+var TW4=[[2050,.73],[2150,.79],[2250,.86],[2350,.92],[2450,.96],[2550,1]];
+function twGR(k,h){if(!k)return 1;return h?Math.max(.65,1-.0222*k+.0009*k*k):1+.04*k+.002*k*k}
+function tw50(k,h){if(!k)return 1;return h?Math.max(.68,1-.0171*k+.000215*k*k):1+.035*k+.0015*k*k}
+var SP={c:[[2050,48],[2150,49],[2250,50],[2350,51],[2450,51],[2550,53]],d:[[2050,52],[2150,54],[2250,55],[2350,56],[2450,57],[2550,58]],e:[[2050,41],[2150,42],[2250,43],[2350,45],[2450,47],[2550,49]],f:[[2050,45],[2150,47],[2250,48],[2350,50],[2450,51],[2550,54]]};
+
+// ═══ LANDING DATA ═══
+var LB1={0:[[-40,610],[-20,660],[0,720],[10,755],[20,790],[30,830],[40,875]],1e3:[[-40,660],[-20,715],[0,780],[10,820],[20,858],[30,900],[40,950]],2e3:[[-40,720],[-20,780],[0,855],[10,895],[20,938],[30,985],[40,1040]],3e3:[[-40,785],[-20,855],[0,935],[10,980],[20,1028],[30,1080],[40,1140]],4e3:[[-40,860],[-20,940],[0,1025],[10,1078],[20,1130],[30,1190],[40,1200]],5e3:[[-40,945],[-20,1035],[0,1130],[10,1190],[20,1200],[30,1200],[40,1200]],6e3:[[-40,1045],[-20,1145],[0,1200],[10,1200],[20,1200],[30,1200],[40,1200]],7e3:[[-40,1160],[-20,1200],[0,1200],[10,1200],[20,1200],[30,1200],[40,1200]]};
+var LB2={0:[[-40,1254],[-20,1285],[0,1326],[10,1352],[20,1378],[30,1409],[40,1445]],1e3:[[-40,1285],[-20,1321],[0,1368],[10,1394],[20,1424],[30,1461],[40,1502]],2e3:[[-40,1326],[-20,1368],[0,1419],[10,1451],[20,1487],[30,1528],[40,1575]],3e3:[[-40,1378],[-20,1424],[0,1481],[10,1518],[20,1559],[30,1606],[40,1658]],4e3:[[-40,1440],[-20,1492],[0,1559],[10,1601],[20,1647],[30,1699],[40,1761]],5e3:[[-40,1513],[-20,1575],[0,1653],[10,1699],[20,1751],[30,1808],[40,1800]],6e3:[[-40,1601],[-20,1673],[0,1761],[10,1800],[20,1800],[30,1800],[40,1800]],7e3:[[-40,1704],[-20,1787],[0,1800],[10,1800],[20,1800],[30,1800],[40,1800]]};
+var LW1=[[2e3,.76],[2100,.80],[2200,.86],[2300,.91],[2400,.955],[2550,1]];
+var LW2=[[2e3,.77],[2100,.82],[2200,.87],[2300,.925],[2400,.96],[2550,1]];
+function lwGR(k,h){if(!k)return 1;return h?Math.max(.7,1-.0098*k-.00012*k*k):1+.04*k+.002*k*k}
+function lw50(k,h){if(!k)return 1;return h?Math.max(.7,1-.0112*k-.00008*k*k):1+.035*k+.0015*k*k}
+
+// ═══ SURFACE ═══
+var surfState={to:'dry',ld:'dry'};
+function setSurf(tab,s,el){
+  surfState[tab]=s;
+  el.closest('.surface-options').querySelectorAll('.surface-opt').forEach(function(e){e.classList.remove('active')});
+  el.classList.add('active');
+  var dc=$(tab+'_depthCtrl'),dr=$(tab+'_depth');
+  if(s==='water'){dc.classList.add('visible');dr.min=0.5;dr.max=2.5;dr.step=0.5;dr.value=1;$(tab+'_depthLbl').innerHTML='<span>0,5</span><span>2,5</span>'}
+  else if(s==='wetsnow'){dc.classList.add('visible');dr.min=0.5;dr.max=5;dr.step=0.5;dr.value=1;$(tab+'_depthLbl').innerHTML='<span>0,5</span><span>5</span>'}
+  else if(s==='powder'){dc.classList.add('visible');dr.min=0.5;dr.max=10;dr.step=0.5;dr.value=1;$(tab+'_depthLbl').innerHTML='<span>0,5</span><span>10</span>'}
+  else{dc.classList.remove('visible')}
+  if(tab==='to')calcTO();else calcLD();
+}
+function getSF(tab){
+  var s=surfState[tab];if(s==='dry')return 1;if(s==='grass')return 1.10;
+  var d=+$(tab+'_depth').value;
+  if(s==='water')return 1+.20*d;if(s==='wetsnow')return 1+.10*d;if(s==='powder')return 1+.05*d;return 1;
+}
+function updDepth(tab){
+  var d=+$(tab+'_depth').value,s=surfState[tab];
+  $(tab+'_depthD').textContent=d.toFixed(1);
+  if(s==='water')$(tab+'_waterP').textContent='+'+(20*d).toFixed(0)+' %';
+  if(s==='wetsnow')$(tab+'_wetsnowP').textContent='+'+(10*d).toFixed(0)+' %';
+  if(s==='powder')$(tab+'_powderP').textContent='+'+(5*d).toFixed(0)+' %';
+  if(tab==='to')calcTO();else calcLD();
+}
+$('to_depth').addEventListener('input',function(){updDepth('to')});
+$('ld_depth').addEventListener('input',function(){updDepth('ld')});
+
+// ═══ TABS ═══
+function switchTab(t){document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active')});document.querySelector('.tab-btn[onclick="switchTab(\''+t+'\')"]').classList.add('active');$('tab-'+t).classList.add('active')}
+
+// ═══ TAKEOFF CALC ═══
+function calcTO(){
+  var o=+$('to_oat').value,p=+$('to_pa').value,wkg=+$('to_wt').value,wk=+$('to_wn').value;
+  var hw=$('to_bh').classList.contains('active'),wlb=wkg*2.20462,cl=Math.max(2e3,Math.min(2550,wlb)),sf=getSF('to');
+  $('to_oatD').textContent=(o>=0?'+':'')+o;$('to_paD').textContent=p.toLocaleString();$('to_wtD').textContent=wkg;$('to_wnD').textContent=wk;
+  updISA('to_isa',p,o);
+  var wa=[];
+  if(wlb>2550)wa.push('d|Vikten '+wkg+' kg ('+Math.round(wlb)+' lbs) överskrider MTOW 2550 lbs (1157 kg)!');
+  if(wlb<2e3)wa.push('w|Vikten under diagrammets undre gräns.');
+  if(!hw&&wk>10)wa.push('w|Medvind >10 kt – utanför diagrammet.');
+  $('to_warn').innerHTML=wa.map(function(s){var p=s.split('|');return'<div class="warn-box '+p[0]+'">'+p[1]+'</div>'}).join('');
+  fm('r_fuGR',bd(TB1,o,p)*it(TW1,cl)*twGR(wk,hw)*sf);
+  fm('r_f25GR',bd(TB2,o,p)*it(TW2,cl)*twGR(wk,hw)*sf);
+  fm('r_fu50',bd(TB3,o,p)*it(TW3,cl)*tw50(wk,hw)*sf);
+  fm('r_f2550',bd(TB4,o,p)*it(TW4,cl)*tw50(wk,hw)*sf);
+  $('s_fuLO').textContent=Math.round(it(SP.c,cl));$('s_fu50').textContent=Math.round(it(SP.d,cl));
+  $('s_f25LO').textContent=Math.round(it(SP.e,cl));$('s_f2550').textContent=Math.round(it(SP.f,cl));
+}
+function toSw(d){$('to_bh').classList.toggle('active',d==='h');$('to_bt').classList.toggle('active',d==='t');calcTO()}
+['to_oat','to_pa','to_wt','to_wn'].forEach(function(id){$(id).addEventListener('input',calcTO)});
+
+// ═══ LANDING CALC ═══
+function calcLD(){
+  var o=+$('ld_oat').value,p=+$('ld_pa').value,wkg=+$('ld_wt').value,wk=+$('ld_wn').value;
+  var hw=$('ld_bh').classList.contains('active'),wlb=wkg*2.20462,cl=Math.max(2e3,Math.min(2550,wlb)),sf=getSF('ld');
+  $('ld_oatD').textContent=(o>=0?'+':'')+o;$('ld_paD').textContent=p.toLocaleString();$('ld_wtD').textContent=wkg;$('ld_wnD').textContent=wk;
+  updISA('ld_isa',p,o);
+  var wa=[];
+  if(wlb>2550)wa.push('d|Vikten '+wkg+' kg ('+Math.round(wlb)+' lbs) överskrider MTOW!');
+  if(!hw&&wk>10)wa.push('w|Medvind >10 kt – utanför diagrammet.');
+  $('ld_warn').innerHTML=wa.map(function(s){var p=s.split('|');return'<div class="warn-box '+p[0]+'">'+p[1]+'</div>'}).join('');
+  fm('r_ldGR',bd(LB1,o,p)*it(LW1,cl)*lwGR(wk,hw)*sf);
+  fm('r_ld50',bd(LB2,o,p)*it(LW2,cl)*lw50(wk,hw)*sf);
+}
+function ldSw(d){$('ld_bh').classList.toggle('active',d==='h');$('ld_bt').classList.toggle('active',d==='t');calcLD()}
+['ld_oat','ld_pa','ld_wt','ld_wn'].forEach(function(id){$(id).addEventListener('input',calcLD)});
+
+calcTO();calcLD();
+</script>
+</body>
+</html>
