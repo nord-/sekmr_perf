@@ -106,6 +106,24 @@
     color: var(--text-dim);
     line-height: 1.5;
   }
+
+  .disclaimer {
+    margin-top: 2rem;
+    padding: 1rem 1.25rem;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 10px;
+    font-size: 0.75rem;
+    color: #f87171;
+    line-height: 1.6;
+  }
+
+  .disclaimer strong {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    margin-bottom: 0.3rem;
+  }
 </style>
 </head>
 <body>
@@ -132,6 +150,11 @@
       <div class="card-title">Takeoff & Landing</div>
       <div class="card-desc">Ground roll and 50 ft obstacle clearance distances. Accounts for OAT, pressure altitude, weight, wind, flaps, and surface conditions.</div>
     </a>
+  </div>
+
+  <div class="disclaimer">
+    <strong>Not for operational flight planning.</strong>
+    All performance data is digitized from POH diagrams and interpolated — values are approximations that may contain errors. Always verify every number against the approved Pilot's Operating Handbook before flight. The pilot in command is solely responsible for flight planning decisions.
   </div>
 </div>
 </body>
