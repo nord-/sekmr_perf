@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PA-28-181 Archer II (SE-KMR)</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1a;
+    --card: #111827;
+    --card-border: #1e293b;
+    --accent: #f59e0b;
+    --accent-dim: #92400e;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-bright: #f8fafc;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(245, 158, 11, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245, 158, 11, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem;
+  }
+
+  header { text-align: center; margin-bottom: 3rem; }
+
+  .aircraft-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, var(--accent-dim), transparent);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 0.35rem 1rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .aircraft-badge svg { width: 16px; height: 16px; fill: var(--accent); }
+
+  h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.4rem;
+  }
+
+  .subtitle { font-size: 0.85rem; color: var(--text-dim); }
+
+  .cards { display: flex; flex-direction: column; gap: 1rem; }
+
+  a.card {
+    display: block;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.3s, transform 0.2s;
+  }
+
+  a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+  .card-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-bright);
+    margin-bottom: 0.4rem;
+  }
+
+  .card-desc {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="aircraft-badge">
+      <svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+      PA-28-181 Archer II — SE-KMR
+    </div>
+    <h1>Flight Planning Tools</h1>
+    <p class="subtitle">Performance calculators and OFP based on POH data</p>
+  </header>
+
+  <div class="cards">
+    <a class="card" href="OFP_PA28_SEKMR_fillable.html">
+      <div class="card-title">Operational Flight Plan</div>
+      <div class="card-desc">Navigation log, wind triangle, fuel planning (VFR/IFR), mass & balance with CG envelope. Save, load, and print.</div>
+    </a>
+    <a class="card" href="pa28_performance_calculator.html">
+      <div class="card-title">Climb / Cruise / Descent</div>
+      <div class="card-desc">Time, distance, and fuel for climb and descent. Cruise TAS, RPM, fuel flow, and range by altitude, temperature, and power setting.</div>
+    </a>
+    <a class="card" href="pa28_takeoff_landing.html">
+      <div class="card-title">Takeoff & Landing</div>
+      <div class="card-desc">Ground roll and 50 ft obstacle clearance distances. Accounts for OAT, pressure altitude, weight, wind, flaps, and surface conditions.</div>
+    </a>
+  </div>
+</div>
+</body>
+</html>
