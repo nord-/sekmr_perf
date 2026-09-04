@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
+<script>
+  // The theme is chosen on the index page and kept in a cookie shared by all pages;
+  // apply it before the first paint so there is no flash of the other theme.
+  (function () {
+    var m = document.cookie.match(/(?:^|; )theme=(light|dark)/);
+    document.documentElement.dataset.theme = m ? m[1] : 'dark';
+  })();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PA-28-181 Performance Calculator</title>
@@ -14,7 +22,7 @@
     --accent: #f59e0b;
     --accent-dim: #92400e;
     --text: #e2e8f0;
-    --text-dim: #64748b;
+    --text-dim: #94a3b8;
     --text-bright: #f8fafc;
     --green: #10b981;
     --red: #ef4444;
@@ -23,6 +31,27 @@
     --cyan: #22d3ee;
     --input-bg: #1e293b;
     --input-border: #334155;
+    --hover: rgba(255, 255, 255, 0.03);
+  }
+  :root { color-scheme: dark; }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f3f4f6;
+    --card: #ffffff;
+    --card-border: #d9dee6;
+    --accent: #b45309;
+    --accent-dim: #fde7c3;
+    --text: #1f2937;
+    --text-dim: #5b6674;
+    --text-bright: #0f172a;
+    --green: #047857;
+    --red: #b91c1c;
+    --blue: #1d4ed8;
+    --purple: #6d28d9;
+    --cyan: #0e7490;
+    --input-bg: #eef1f5;
+    --input-border: #c3ccd8;
+    --hover: rgba(0, 0, 0, 0.04);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -128,7 +157,7 @@
     background: var(--accent);
   }
 
-  .tab-btn:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.03); }
+  .tab-btn:hover:not(.active) { color: var(--text); background: var(--hover); }
 
   .tab-content { display: none; }
   .tab-content.active { display: block; }

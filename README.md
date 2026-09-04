@@ -2,7 +2,7 @@
 
 > **WARNING: These tools are NOT approved for operational flight planning. All values are digitized approximations from POH diagrams and MUST be verified against the original Pilot's Operating Handbook before any real-world use. Do not rely on these calculators as your primary source — always cross-check every number with the actual POH.**
 
-A set of browser-based flight planning tools for the PA-28-181 Archer II, tailored to SE-KMR.
+A set of browser-based flight planning tools for the PA-28-181 Archer II, tailored to SE-KMR. The calculators default to a dark theme; a light theme can be selected on the index page and is remembered in a cookie.
 
 **Live version:** https://nord-.github.io/sekmr_perf/
 
