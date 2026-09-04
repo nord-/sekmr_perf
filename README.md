@@ -4,7 +4,7 @@
 
 A set of browser-based flight planning tools for the PA-28-181 Archer II, tailored to SE-KMR. The calculators default to a dark theme; a light theme can be selected on the index page and is remembered in a cookie.
 
-**Live version:** https://nord-.github.io/sekmr_perf/
+**Live version:** https://nord-.github.io/sekmr_perf/ (also served at http://nord.cc:8080)
 
 ## Tools
 
