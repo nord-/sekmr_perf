@@ -19,8 +19,8 @@ All computation is client-side JavaScript. No external JS libraries — only Goo
 ### Design patterns used across files
 
 - **POH data as JS lookup tables** — Performance data is digitized from Pilot's Operating Handbook charts into nested objects keyed by altitude (ft), with arrays of `[temperature, value]` pairs or `{ power%: value }` objects.
-- **Linear interpolation** — `lerp()` / `lerpNested()` / `it()` functions interpolate between data points for altitude, temperature, power setting, and weight. The climb/cruise/descent calculator uses a "cumulative from sea level" subtraction method: `result = lerp(cruiseAlt) - lerp(departureAlt)`.
-- **Temperature correction** — ISA deviation (`OAT - ISA_temp`) is computed via `getISA(alt) = 15 - alt * 1.98/1000`. Corrections are applied as multiplicative factors (e.g., `1 + dev * 0.01` for climb).
+- **Linear interpolation** — `lerp()` / `lerpNested()` / `it()` functions interpolate between data points for altitude, temperature, power setting, and weight. The climb/cruise/descent calculator uses a "cumulative from sea level" subtraction method: `result = lerp(cruiseAlt) - lerp(departureAlt)`, evaluated at the POH chart altitude `H` rather than pressure altitude — `climbChartAlt()` / `descentChartAlt()` / `rocChartAlt()` convert PA + OAT to H the way each chart's left panel does (Fig. 5-17, 5-31, 5-15).
+- **Temperature correction** — ISA deviation (`OAT - ISA_temp`) is computed via `getISA(alt) = 15 - alt * 1.98/1000`. Climb, descent and ROC apply it through the chart altitude (see below); the takeoff/landing charts use OAT directly.
 - **Density altitude** — `DA = PA + 120 * (OAT - ISA_temp)`, used in cruise TAS and RPM lookups. Cruise tables (`cruiseTAS.best_power` / `cruiseTAS.economy`, `cruiseRPM`, `fullThrottleTAS`) are digitized from POH Fig. 5-19/5-21/5-23 and keyed by DA in 1000 ft steps; `maxPowerAvailable(DA)` clamps requested power to the full-throttle limit (75% to ~7500 ft DA, 65% at 12 000 ft).
 - **Event-driven recalculation** — Input events trigger cascading recalcs. In the OFP, changing a single field (e.g., wind direction) propagates through: wind triangle -> WCA/GS -> time_leg -> fuel_leg -> fuel table -> mass & balance -> CG chart.
 
@@ -35,9 +35,8 @@ All computation is client-side JavaScript. No external JS libraries — only Goo
 
 ### Takeoff/Landing-specific details
 
-- Four takeoff configurations: flaps-up ground roll (TB1), flaps-25 ground roll (TB2), flaps-up over 50ft (TB3), flaps-25 over 50ft (TB4). Two landing: ground roll (LB1), over 50ft (LB2).
-- Weight correction via separate interpolation tables (TW1-TW4, LW1-LW2) indexed by weight in lbs.
-- Wind correction functions (`twGR`, `tw50`, `lwGR`, `lw50`) use quadratic polynomials, different for headwind vs tailwind.
+- Four takeoff configurations: flaps-up ground roll (TB1, Fig. 5-11), flaps-25 ground roll (TB2, Fig. 5-13), flaps-up over 50ft (TB3, Fig. 5-7), flaps-25 over 50ft (TB4, Fig. 5-9). Two landing: ground roll (LB1, Fig. 5-37), over 50ft (LB2, Fig. 5-35).
+- All six charts live in one `CHARTS` object: straight pressure-altitude lines `dist = a + b*OAT` per 1000 ft (`lines`), a weight ratio per 100 lbs below 2550 (`wt`), linear head/tailwind fractions per knot (`hw`, `tw`) and the distance range the POH actually draws (`lo`, `hi`). `chartDist()` multiplies base × weight × wind × surface and flags cases outside the chart (OAT > 30 °C, tailwind > 5 kt, weight < 2000 lbs, base outside lo/hi) instead of clamping.
 - Surface factor multipliers: grass +10%, water/slush +20%/cm, wet snow +10%/cm, powder +5%/cm.
 - Results displayed in meters with feet shown as subtitle.
 

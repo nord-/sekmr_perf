@@ -21,7 +21,7 @@ Ground roll and 50 ft obstacle clearance distances for multiple flap configurati
 
 **These tools are provided for educational and reference purposes only.**
 
-- Performance data has been digitized from POH charts (Figures 5-7, 5-9, 5-11, 5-13, 5-19, 5-21, 5-23, 5-35, 5-37 and others) and interpolated. Accuracy is approximately ±1–2% under ideal conditions, but errors may exist.
+- Performance data has been digitized from POH charts (Figures 5-7, 5-9, 5-11, 5-13, 5-15, 5-17, 5-19, 5-21, 5-23, 5-31, 5-35, 5-37). Each chart panel was read separately (pressure-altitude lines, weight and wind guide lines, curves), so the tables reproduce the POH worked examples within about 2 % and individual readings are good to roughly ±3 %, but errors may exist.
 - Surface condition corrections (anything other than dry paved runway) are rules of thumb, not POH data.
 - Mass & balance constants are specific to SE-KMR and its equipment list. They do not apply to other PA-28-181 airframes.
 - **The pilot in command is solely responsible for verifying all performance data against the approved POH before flight.**
