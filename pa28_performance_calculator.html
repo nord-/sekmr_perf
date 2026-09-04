@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
+<meta charset="UTF-8">
 <script>
   // The theme is chosen on the index page and kept in a cookie shared by all pages;
   // apply it before the first paint so there is no flash of the other theme.
   (function () {
     var m = document.cookie.match(/(?:^|; )theme=(light|dark)/);
-    document.documentElement.dataset.theme = m ? m[1] : 'dark';
+    document.documentElement.dataset.theme = m ? m[1] : (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
   })();
 </script>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PA-28-181 Performance Calculator</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛩️</text></svg>">
@@ -103,6 +103,30 @@
   }
 
   .aircraft-badge svg { width: 16px; height: 16px; fill: var(--accent); }
+
+  .theme-toggle {
+    display: inline-flex;
+    margin-top: 1.25rem;
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    padding: 3px;
+    background: var(--card);
+  }
+
+  .theme-toggle button {
+    border: 0;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .theme-toggle button.active { background: var(--accent); color: var(--bg); }
 
   h1 {
     font-family: 'IBM Plex Mono', monospace;
@@ -516,6 +540,10 @@
     </div>
     <h1>Performance Calculator</h1>
     <p class="subtitle">Climb, Cruise Speed & Engine Performance från POH</p>
+    <div class="theme-toggle" role="group" aria-label="Färgtema">
+      <button type="button" data-theme-btn="dark" aria-pressed="false" onclick="setTheme('dark')">☾ Mörkt</button>
+      <button type="button" data-theme-btn="light" aria-pressed="false" onclick="setTheme('light')">☀ Ljust</button>
+    </div>
   </header>
 
   <!-- Tab bar -->
@@ -779,6 +807,21 @@
 </div>
 
 <script>
+// Cookie without a path so it covers exactly this folder (all the tool pages live beside index.html).
+function syncThemeButtons(t) {
+  document.querySelectorAll('[data-theme-btn]').forEach(b => {
+    var active = b.dataset.themeBtn === t;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-pressed', active);
+  });
+}
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  document.cookie = 'theme=' + t + '; max-age=31536000; SameSite=Lax';
+  syncThemeButtons(t);
+}
+syncThemeButtons(document.documentElement.dataset.theme);
+
 const GAL_TO_L = 3.7854;
 const TOTAL_FUEL_GAL = 48;
 
