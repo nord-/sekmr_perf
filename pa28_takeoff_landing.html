@@ -2,6 +2,14 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
+<script>
+  // The theme is chosen on the index page and kept in a cookie shared by all pages;
+  // apply it before the first paint so there is no flash of the other theme.
+  (function () {
+    var m = document.cookie.match(/(?:^|; )theme=(light|dark)/);
+    document.documentElement.dataset.theme = m ? m[1] : (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  })();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PA-28-181 Takeoff & Landing</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛩️</text></svg>">
@@ -9,8 +17,28 @@
 <style>
 :root {
   --bg: #0a0f1a; --card: #111827; --card-border: #1e293b; --accent: #f59e0b; --accent-dim: #92400e;
-  --text: #e2e8f0; --text-dim: #64748b; --text-bright: #f8fafc; --green: #10b981; --red: #ef4444;
-  --blue: #3b82f6; --purple: #a78bfa; --cyan: #22d3ee; --input-bg: #1e293b; --input-border: #334155;
+  --text: #e2e8f0; --text-dim: #94a3b8; --text-bright: #f8fafc; --green: #10b981; --red: #ef4444;
+  --blue: #3b82f6; --purple: #a78bfa; --cyan: #22d3ee; --input-bg: #1e293b; --input-border: #334155; --hover: rgba(255,255,255,.03);
+}
+:root { color-scheme: dark; }
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f4f6;
+  --card: #ffffff;
+  --card-border: #d9dee6;
+  --accent: #b45309;
+  --accent-dim: #fde7c3;
+  --text: #1f2937;
+  --text-dim: #5b6674;
+  --text-bright: #0f172a;
+  --green: #047857;
+  --red: #b91c1c;
+  --blue: #1d4ed8;
+  --purple: #6d28d9;
+  --cyan: #0e7490;
+  --input-bg: #eef1f5;
+  --input-border: #c3ccd8;
+  --hover: rgba(0, 0, 0, 0.04);
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
@@ -21,11 +49,14 @@ header { text-align:center; margin-bottom:2rem; }
 .aircraft-badge svg { width:16px; height:16px; fill:var(--accent); }
 h1 { font-family:'IBM Plex Mono',monospace; font-size:1.5rem; font-weight:700; color:var(--text-bright); letter-spacing:-.02em; margin-bottom:.4rem; }
 .subtitle { font-size:.85rem; color:var(--text-dim); }
+.theme-toggle { display:inline-flex; margin-top:1.25rem; border:1px solid var(--card-border); border-radius:999px; padding:3px; background:var(--card); }
+.theme-toggle button { border:0; background:transparent; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; padding:.35rem .9rem; border-radius:999px; cursor:pointer; }
+.theme-toggle button.active { background:var(--accent); color:var(--bg); }
 .tab-bar { display:flex; gap:0; margin-bottom:1.5rem; background:var(--card); border:1px solid var(--card-border); border-radius:10px; overflow:hidden; }
 .tab-btn { flex:1; padding:.85rem 1rem; border:none; background:transparent; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; font-size:.75rem; font-weight:600; cursor:pointer; transition:all .25s; letter-spacing:.06em; text-transform:uppercase; position:relative; }
 .tab-btn.active { background:rgba(245,158,11,.12); color:var(--accent); }
 .tab-btn.active::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:var(--accent); }
-.tab-btn:hover:not(.active) { color:var(--text); background:rgba(255,255,255,.03); }
+.tab-btn:hover:not(.active) { color:var(--text); background:var(--hover); }
 .tab-content { display:none; } .tab-content.active { display:block; }
 .conditions { display:inline-flex; flex-wrap:wrap; gap:.5rem; margin-top:.75rem; font-family:'IBM Plex Mono',monospace; font-size:.7rem; color:var(--text-dim); letter-spacing:.05em; justify-content:center; }
 .conditions span { background:var(--card); border:1px solid var(--card-border); padding:.25rem .6rem; border-radius:4px; }
@@ -104,6 +135,10 @@ input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-ou
   <div class="aircraft-badge"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>PA-28-181 Archer II</div>
   <h1>Takeoff & Landing Performance</h1>
   <p class="subtitle">Startprestanda & landningssträcka från POH</p>
+  <div class="theme-toggle" role="group" aria-label="Färgtema">
+    <button type="button" data-theme-btn="dark" aria-pressed="false" onclick="setTheme('dark')">☾ Mörkt</button>
+    <button type="button" data-theme-btn="light" aria-pressed="false" onclick="setTheme('light')">☀ Ljust</button>
+  </div>
 </header>
 
 <div class="tab-bar">
@@ -146,7 +181,7 @@ input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-ou
   <div class="result-section"><div class="result-section-title"><span class="flap-tag f25">FLAPS 25</span> 25° Flaps</div><div class="result-pair"><div class="result-card gr"><div class="result-icon">🛫</div><div class="result-title">Startrull</div><div class="result-value" id="r_f25GR">—</div><div class="result-unit">meter</div><div class="result-sub" id="r_f25GR_ft"></div></div><div class="result-card ob"><div class="result-icon">🏔</div><div class="result-title">Över 50 ft hinder</div><div class="result-value" id="r_f2550">—</div><div class="result-unit">meter</div><div class="result-sub" id="r_f2550_ft"></div></div></div></div>
   <div class="panel-label" style="margin-top:1.5rem">Starthastigheter</div>
   <div class="speed-grid"><div class="speed-card"><div class="speed-label">Flaps Up Liftoff</div><div class="speed-val" id="s_fuLO">—</div><div class="speed-unit">KIAS</div></div><div class="speed-card"><div class="speed-label">Flaps Up 50 ft</div><div class="speed-val" id="s_fu50">—</div><div class="speed-unit">KIAS</div></div><div class="speed-card"><div class="speed-label">25° Liftoff</div><div class="speed-val" id="s_f25LO">—</div><div class="speed-unit">KIAS</div></div><div class="speed-card"><div class="speed-label">25° Flaps 50 ft</div><div class="speed-val" id="s_f2550">—</div><div class="speed-unit">KIAS</div></div></div>
-  <div class="note"><strong>⚠ Ej för operativ flygning.</strong> Digitaliserade POH-diagram (Fig 5-7, 5-9, 5-11, 5-13), kalibrerade ±1%. Banförhållanden utöver torr asfalt är tumregler. Använd alltid originaldokumentationen.</div>
+  <div class="note"><strong>⚠ Ej för operativ flygning.</strong> Digitaliserade POH-diagram (Fig 5-7, 5-9, 5-11, 5-13): tryckhöjdslinjer, vikt- och vindkorrektion avlästa var för sig, ±3 % mot diagrammet. Medvind finns i POH bara till 5 kt. Banförhållanden utöver torr asfalt är tumregler. Använd alltid originaldokumentationen.</div>
 </div>
 </div>
 
@@ -189,40 +224,61 @@ input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-ou
     <div class="speed-card"><div class="speed-label">Approach (Vref)</div><div class="speed-val">66</div><div class="speed-unit">KIAS</div></div>
     <div class="speed-card"><div class="speed-label">Flaps</div><div class="speed-val">40°</div><div class="speed-unit">FULL</div></div>
   </div>
-  <div class="note"><strong>⚠ Ej för operativ flygning.</strong> Digitaliserade POH-diagram (Fig 5-35, 5-37), kalibrerade ±1%. Banförhållanden utöver torr asfalt är tumregler. Använd alltid originaldokumentationen.</div>
+  <div class="note"><strong>⚠ Ej för operativ flygning.</strong> Digitaliserade POH-diagram (Fig 5-35, 5-37): tryckhöjdslinjer, vikt- och vindkorrektion avlästa var för sig, ±3 % mot diagrammet. Medvind finns i POH bara till 5 kt. Banförhållanden utöver torr asfalt är tumregler. Använd alltid originaldokumentationen.</div>
 </div>
 </div>
 </div>
 
 <script>
+// Cookie without a path so it covers exactly this folder (all the tool pages live beside index.html).
+function syncThemeButtons(t){document.querySelectorAll('[data-theme-btn]').forEach(function(b){var active=b.dataset.themeBtn===t;b.classList.toggle('active',active);b.setAttribute('aria-pressed',active)})}
+function setTheme(t){document.documentElement.dataset.theme=t;document.cookie='theme='+t+'; max-age=31536000; SameSite=Lax';syncThemeButtons(t)}
+syncThemeButtons(document.documentElement.dataset.theme);
 var $=function(id){return document.getElementById(id)};
 function lp(x,a,b,ya,yb){return b===a?ya:ya+(x-a)/(b-a)*(yb-ya)}
 function it(t,x){if(x<=t[0][0])return t[0][1];if(x>=t[t.length-1][0])return t[t.length-1][1];for(var i=0;i<t.length-1;i++)if(x>=t[i][0]&&x<=t[i+1][0])return lp(x,t[i][0],t[i+1][0],t[i][1],t[i+1][1]);return t[t.length-1][1]}
 function getISA(a){return 15-a*1.98/1000}
 function updISA(id,alt,oat){var d=oat-getISA(alt);$(id).textContent='ISA '+(d>=0?'+':'')+d.toFixed(0)+'°C';$(id).className='isa-indicator '+(Math.abs(d)<2?'std':(d>0?'warm':'cold'))}
-function bd(B,o,p){var as=Object.keys(B).map(Number).sort(function(a,b){return a-b}),cp=Math.max(as[0],Math.min(as[as.length-1],p)),lo=as[0],hi=as[0];for(var i=0;i<as.length-1;i++){if(cp>=as[i]&&cp<=as[i+1]){lo=as[i];hi=as[i+1];break}if(cp>as[i]){lo=as[i];hi=as[Math.min(i+1,as.length-1)]}}var dl=it(B[lo],o),dh=it(B[hi],o);return lo===hi?dl:lp(cp,lo,hi,dl,dh)}
 function fm(id,ft){var m=ft/3.28084;$(id).textContent=Math.round(m);$(id+'_ft').textContent=Math.round(ft)+' ft'}
 
-// ═══ TAKEOFF DATA ═══
-var TB1={0:[[-40,735],[-20,820],[0,920],[10,975],[20,1040],[30,1115],[40,1200]],1e3:[[-40,830],[-20,930],[0,1040],[10,1105],[20,1175],[30,1265],[40,1360]],2e3:[[-40,940],[-20,1060],[0,1185],[10,1260],[20,1340],[30,1440],[40,1550]],3e3:[[-40,1070],[-20,1205],[0,1345],[10,1435],[20,1525],[30,1640],[40,1770]],4e3:[[-40,1225],[-20,1375],[0,1540],[10,1640],[20,1745],[30,1880],[40,2030]],5e3:[[-40,1405],[-20,1580],[0,1770],[10,1885],[20,2005],[30,2160],[40,2330]],6e3:[[-40,1620],[-20,1820],[0,2040],[10,2170],[20,2315],[30,2490],[40,2400]],7e3:[[-40,1870],[-20,2100],[0,2355],[10,2510],[20,2400],[30,2400],[40,2400]]};
-var TB2={0:[[-40,622],[-20,699],[0,785],[10,836],[20,887],[30,959],[40,1035]],1e3:[[-40,709],[-20,796],[0,896],[10,952],[20,1015],[30,1097],[40,1185]],2e3:[[-40,811],[-20,914],[0,1025],[10,1091],[20,1163],[30,1255],[40,1357]],3e3:[[-40,928],[-20,1046],[0,1178],[10,1254],[20,1340],[30,1448],[40,1566]],4e3:[[-40,1072],[-20,1209],[0,1357],[10,1448],[20,1545],[30,1668],[40,1805]],5e3:[[-40,1239],[-20,1399],[0,1571],[10,1673],[20,1785],[30,1928],[40,2086]],6e3:[[-40,1438],[-20,1622],[0,1821],[10,1943],[20,2074],[30,2240],[40,2400]],7e3:[[-40,1673],[-20,1887],[0,2122],[10,2264],[20,2400],[30,2400],[40,2400]]};
-var TB3={0:[[-40,1370],[-20,1535],[0,1715],[10,1825],[20,1940],[30,2085],[40,2250]],1e3:[[-40,1560],[-20,1750],[0,1960],[10,2085],[20,2220],[30,2385],[40,2575]],2e3:[[-40,1785],[-20,2005],[0,2245],[10,2390],[20,2545],[30,2740],[40,2960]],3e3:[[-40,2050],[-20,2305],[0,2585],[10,2755],[20,2935],[30,3160],[40,3415]],4e3:[[-40,2370],[-20,2665],[0,2985],[10,3185],[20,3395],[30,3655],[40,3950]],5e3:[[-40,2745],[-20,3085],[0,3460],[10,3690],[20,3935],[30,4240],[40,4500]],6e3:[[-40,3195],[-20,3590],[0,4025],[10,4295],[20,4500],[30,4500],[40,4500]],7e3:[[-40,3730],[-20,4195],[0,4500],[10,4500],[20,4500],[30,4500],[40,4500]]};
-var TB4={0:[[-40,1188],[-20,1334],[0,1490],[10,1588],[20,1690],[30,1820],[40,1966]],1e3:[[-40,1361],[-20,1528],[0,1714],[10,1828],[20,1944],[30,2097],[40,2264]],2e3:[[-40,1561],[-20,1755],[0,1966],[10,2097],[20,2234],[30,2411],[40,2609]],3e3:[[-40,1798],[-20,2023],[0,2269],[10,2422],[20,2581],[30,2786],[40,3013]],4e3:[[-40,2084],[-20,2343],[0,2628],[10,2805],[20,2993],[30,3229],[40,3494]],5e3:[[-40,2419],[-20,2722],[0,3053],[10,3260],[20,3480],[30,3400],[40,3400]],6e3:[[-40,2819],[-20,3173],[0,3400],[10,3400],[20,3400],[30,3400],[40,3400]],7e3:[[-40,3300],[-20,3400],[0,3400],[10,3400],[20,3400],[30,3400],[40,3400]]};
-var TW1=[[2e3,.76],[2100,.80],[2200,.84],[2300,.89],[2400,.935],[2550,1]];
-var TW2=[[2e3,.74],[2100,.78],[2200,.83],[2300,.88],[2400,.935],[2550,1]];
-var TW3=[[2050,.73],[2150,.79],[2250,.86],[2350,.92],[2450,.96],[2550,1]];
-var TW4=[[2050,.73],[2150,.79],[2250,.86],[2350,.92],[2450,.96],[2550,1]];
-function twGR(k,h){if(!k)return 1;return h?Math.max(.65,1-.0222*k+.0009*k*k):1+.04*k+.002*k*k}
-function tw50(k,h){if(!k)return 1;return h?Math.max(.68,1-.0171*k+.000215*k*k):1+.035*k+.0015*k*k}
+// ═══ POH CHART MODEL ═══
+// Digitized from the scanned POH charts (see docs/DIGITIZING.md). Each chart has three panels:
+//  - left: straight pressure-altitude lines, dist = a + b*OAT (ft, degC), one per 1000 ft;
+//  - middle: weight guide lines, a constant ratio per 100 lbs below the 2550 lbs reference;
+//  - right: straight wind guide lines, a constant fraction per knot (tailwind charted to 5 kt only).
+// lo/hi is the distance range the POH actually draws; outside it the straight lines are
+// extrapolated and the result is flagged. All charts cover OAT -40..+30 degC and 2000..2550 lbs.
+var CHARTS={
+  // Fig 5-11 Takeoff ground roll, 0 deg flaps (POH example 2000 ft/21C/2400 lbs/8 kt -> 1100)
+  TB1:{lines:{0:[715,18.05],1000:[925,18.25],2000:[1094,18.3],3000:[1269,18.9],4000:[1465,19.9],5000:[1663,21.4],6000:[1897,23.0],7000:[2086,22.6]},lo:875,hi:2400,wt:.909,hw:.016,tw:.06},
+  // Fig 5-13 Takeoff ground roll, 25 deg flaps (example 2000 ft/21C/2400 lbs/10 kt -> 950)
+  TB2:{lines:{0:[607,16.4],1000:[777,16.4],2000:[958,16.5],3000:[1114,16.7],4000:[1291,16.7],5000:[1482,17.0],6000:[1669,17.9],7000:[1847,19.7]},lo:810,hi:2400,wt:.918,hw:.017,tw:.055},
+  // Fig 5-7 Takeoff over 50 ft, 0 deg flaps (example 2000 ft/21C/2400 lbs/15 kt -> 1900)
+  TB3:{lines:{0:[1405,27.9],1000:[1651,31.7],2000:[1980,33.5],3000:[2319,37.0],4000:[2672,42.5],5000:[3112,49.2],6000:[3576,52.9],7000:[4092,55.6]},lo:1500,hi:4500,wt:.895,hw:.0118,tw:.045},
+  // Fig 5-9 Takeoff over 50 ft, 25 deg flaps (example 2000 ft/21C/2400 lbs/8 kt -> 1860)
+  TB4:{lines:{0:[1251,24.3],1000:[1532,26.5],2000:[1795,28.5],3000:[2121,31.0],4000:[2447,33.5],5000:[2768,33.4],6000:[3185,38.3],7000:[3609,42.2]},lo:1000,hi:3400,wt:.918,hw:.015,tw:.043},
+  // Fig 5-37 Landing ground roll (example 2300 ft/21C/2264 lbs/5 kt -> 825)
+  LB1:{lines:{0:[860,3.64],1000:[892,3.77],2000:[924,3.91],3000:[957,4.05],4000:[991,4.19],5000:[1027,4.34],6000:[1064,4.5],7000:[1102,4.66]},lo:600,hi:1200,wt:.96,hw:.0175,tw:.048},
+  // Fig 5-35 Landing over 50 ft (example 2300 ft/21C/2264 lbs/5 kt -> 1290)
+  LB2:{lines:{0:[1368,2.9],2000:[1428,2.78],4000:[1496,3.21],6000:[1572,3.92],7000:[1612,3.96]},lo:1200,hi:1800,wt:.974,hw:.015,tw:.045}
+};
+var CHART_OAT_MAX=30,CHART_TAILWIND_MAX=5,CHART_WT_MIN=2000,CHART_WT_REF=2550;
+// Distance at 2550 lbs, zero wind: interpolate linearly in pressure altitude between the chart lines
+function baseDist(ch,oat,pa){
+  var alts=Object.keys(ch.lines).map(Number).sort(function(a,b){return a-b});
+  var line=function(a){return ch.lines[a][0]+ch.lines[a][1]*oat};
+  pa=Math.max(alts[0],Math.min(alts[alts.length-1],pa));
+  for(var i=0;i<alts.length-1;i++)if(pa<=alts[i+1])return lp(pa,alts[i],alts[i+1],line(alts[i]),line(alts[i+1]));
+  return line(alts[alts.length-1]);
+}
+function wtFactor(ch,lb){return Math.pow(ch.wt,(CHART_WT_REF-Math.max(CHART_WT_MIN,Math.min(CHART_WT_REF,lb)))/100)}
+function windFactor(ch,k,hw){return hw?1-ch.hw*k:1+ch.tw*k}
+// Full chart solution; also reports whether the POH actually charts this case
+function chartDist(ch,oat,pa,lb,k,hw,sf){
+  var raw=baseDist(ch,oat,pa),base=Math.max(ch.lo,raw);
+  return {ft:base*wtFactor(ch,lb)*windFactor(ch,k,hw)*sf,off:raw<ch.lo||raw>ch.hi};
+}
 var SP={c:[[2050,48],[2150,49],[2250,50],[2350,51],[2450,51],[2550,53]],d:[[2050,52],[2150,54],[2250,55],[2350,56],[2450,57],[2550,58]],e:[[2050,41],[2150,42],[2250,43],[2350,45],[2450,47],[2550,49]],f:[[2050,45],[2150,47],[2250,48],[2350,50],[2450,51],[2550,54]]};
-
-// ═══ LANDING DATA ═══
-var LB1={0:[[-40,610],[-20,660],[0,720],[10,755],[20,790],[30,830],[40,875]],1e3:[[-40,660],[-20,715],[0,780],[10,820],[20,858],[30,900],[40,950]],2e3:[[-40,720],[-20,780],[0,855],[10,895],[20,938],[30,985],[40,1040]],3e3:[[-40,785],[-20,855],[0,935],[10,980],[20,1028],[30,1080],[40,1140]],4e3:[[-40,860],[-20,940],[0,1025],[10,1078],[20,1130],[30,1190],[40,1200]],5e3:[[-40,945],[-20,1035],[0,1130],[10,1190],[20,1200],[30,1200],[40,1200]],6e3:[[-40,1045],[-20,1145],[0,1200],[10,1200],[20,1200],[30,1200],[40,1200]],7e3:[[-40,1160],[-20,1200],[0,1200],[10,1200],[20,1200],[30,1200],[40,1200]]};
-var LB2={0:[[-40,1254],[-20,1285],[0,1326],[10,1352],[20,1378],[30,1409],[40,1445]],1e3:[[-40,1285],[-20,1321],[0,1368],[10,1394],[20,1424],[30,1461],[40,1502]],2e3:[[-40,1326],[-20,1368],[0,1419],[10,1451],[20,1487],[30,1528],[40,1575]],3e3:[[-40,1378],[-20,1424],[0,1481],[10,1518],[20,1559],[30,1606],[40,1658]],4e3:[[-40,1440],[-20,1492],[0,1559],[10,1601],[20,1647],[30,1699],[40,1761]],5e3:[[-40,1513],[-20,1575],[0,1653],[10,1699],[20,1751],[30,1808],[40,1800]],6e3:[[-40,1601],[-20,1673],[0,1761],[10,1800],[20,1800],[30,1800],[40,1800]],7e3:[[-40,1704],[-20,1787],[0,1800],[10,1800],[20,1800],[30,1800],[40,1800]]};
-var LW1=[[2e3,.76],[2100,.80],[2200,.86],[2300,.91],[2400,.955],[2550,1]];
-var LW2=[[2e3,.77],[2100,.82],[2200,.87],[2300,.925],[2400,.96],[2550,1]];
-function lwGR(k,h){if(!k)return 1;return h?Math.max(.7,1-.0098*k-.00012*k*k):1+.04*k+.002*k*k}
-function lw50(k,h){if(!k)return 1;return h?Math.max(.7,1-.0112*k-.00008*k*k):1+.035*k+.0015*k*k}
 
 // ═══ SURFACE ═══
 var surfState={to:'dry',ld:'dry'};
@@ -264,15 +320,19 @@ function calcTO(){
   updISA('to_isa',p,o);
   var wa=[];
   if(wlb>2550)wa.push('d|Vikten '+wkg+' kg ('+Math.round(wlb)+' lbs) överskrider MTOW 2550 lbs (1157 kg)!');
-  if(wlb<2e3)wa.push('w|Vikten under diagrammets undre gräns.');
-  if(!hw&&wk>10)wa.push('w|Medvind >10 kt – utanför diagrammet.');
+  var r=[chartDist(CHARTS.TB1,o,p,wlb,wk,hw,sf),chartDist(CHARTS.TB2,o,p,wlb,wk,hw,sf),chartDist(CHARTS.TB3,o,p,wlb,wk,hw,sf),chartDist(CHARTS.TB4,o,p,wlb,wk,hw,sf)];
+  chartWarnings(wa,o,wlb,wk,hw,r);
   $('to_warn').innerHTML=wa.map(function(s){var p=s.split('|');return'<div class="warn-box '+p[0]+'">'+p[1]+'</div>'}).join('');
-  fm('r_fuGR',bd(TB1,o,p)*it(TW1,cl)*twGR(wk,hw)*sf);
-  fm('r_f25GR',bd(TB2,o,p)*it(TW2,cl)*twGR(wk,hw)*sf);
-  fm('r_fu50',bd(TB3,o,p)*it(TW3,cl)*tw50(wk,hw)*sf);
-  fm('r_f2550',bd(TB4,o,p)*it(TW4,cl)*tw50(wk,hw)*sf);
+  fm('r_fuGR',r[0].ft);fm('r_f25GR',r[1].ft);fm('r_fu50',r[2].ft);fm('r_f2550',r[3].ft);
   $('s_fuLO').textContent=Math.round(it(SP.c,cl));$('s_fu50').textContent=Math.round(it(SP.d,cl));
   $('s_f25LO').textContent=Math.round(it(SP.e,cl));$('s_f2550').textContent=Math.round(it(SP.f,cl));
+}
+// Cases the POH does not chart are still computed (straight-line extrapolation) but flagged
+function chartWarnings(wa,o,wlb,wk,hw,results){
+  if(o>CHART_OAT_MAX)wa.push('w|OAT över +'+CHART_OAT_MAX+' °C – utanför POH-diagrammet, extrapolerat.');
+  if(wlb<CHART_WT_MIN)wa.push('w|Vikten under diagrammets undre gräns '+CHART_WT_MIN+' lbs – räknat som '+CHART_WT_MIN+' lbs.');
+  if(!hw&&wk>CHART_TAILWIND_MAX)wa.push('d|Medvind över '+CHART_TAILWIND_MAX+' kt – POH ger inga data, extrapolerat.');
+  if(results.some(function(x){return x.off}))wa.push('w|Grundsträckan ligger utanför diagrammets område – under undre gränsen räknat som diagrammets lägsta värde, verifiera mot POH.');
 }
 function toSw(d){$('to_bh').classList.toggle('active',d==='h');$('to_bt').classList.toggle('active',d==='t');calcTO()}
 ['to_oat','to_pa','to_wt','to_wn'].forEach(function(id){$(id).addEventListener('input',calcTO)});
@@ -280,15 +340,15 @@ function toSw(d){$('to_bh').classList.toggle('active',d==='h');$('to_bt').classL
 // ═══ LANDING CALC ═══
 function calcLD(){
   var o=+$('ld_oat').value,p=+$('ld_pa').value,wkg=+$('ld_wt').value,wk=+$('ld_wn').value;
-  var hw=$('ld_bh').classList.contains('active'),wlb=wkg*2.20462,cl=Math.max(2e3,Math.min(2550,wlb)),sf=getSF('ld');
+  var hw=$('ld_bh').classList.contains('active'),wlb=wkg*2.20462,sf=getSF('ld');
   $('ld_oatD').textContent=(o>=0?'+':'')+o;$('ld_paD').textContent=p.toLocaleString();$('ld_wtD').textContent=wkg;$('ld_wnD').textContent=wk;
   updISA('ld_isa',p,o);
   var wa=[];
   if(wlb>2550)wa.push('d|Vikten '+wkg+' kg ('+Math.round(wlb)+' lbs) överskrider MTOW!');
-  if(!hw&&wk>10)wa.push('w|Medvind >10 kt – utanför diagrammet.');
+  var r=[chartDist(CHARTS.LB1,o,p,wlb,wk,hw,sf),chartDist(CHARTS.LB2,o,p,wlb,wk,hw,sf)];
+  chartWarnings(wa,o,wlb,wk,hw,r);
   $('ld_warn').innerHTML=wa.map(function(s){var p=s.split('|');return'<div class="warn-box '+p[0]+'">'+p[1]+'</div>'}).join('');
-  fm('r_ldGR',bd(LB1,o,p)*it(LW1,cl)*lwGR(wk,hw)*sf);
-  fm('r_ld50',bd(LB2,o,p)*it(LW2,cl)*lw50(wk,hw)*sf);
+  fm('r_ldGR',r[0].ft);fm('r_ld50',r[1].ft);
 }
 function ldSw(d){$('ld_bh').classList.toggle('active',d==='h');$('ld_bt').classList.toggle('active',d==='t');calcLD()}
 ['ld_oat','ld_pa','ld_wt','ld_wn'].forEach(function(id){$(id).addEventListener('input',calcLD)});
