@@ -2,6 +2,14 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
+<script>
+  // The theme is chosen on the index page and kept in a cookie shared by all pages;
+  // apply it before the first paint so there is no flash of the other theme.
+  (function () {
+    var m = document.cookie.match(/(?:^|; )theme=(light|dark)/);
+    document.documentElement.dataset.theme = m ? m[1] : (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  })();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PA-28-181 Performance Calculator</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛩️</text></svg>">
@@ -14,7 +22,7 @@
     --accent: #f59e0b;
     --accent-dim: #92400e;
     --text: #e2e8f0;
-    --text-dim: #64748b;
+    --text-dim: #94a3b8;
     --text-bright: #f8fafc;
     --green: #10b981;
     --red: #ef4444;
@@ -23,6 +31,27 @@
     --cyan: #22d3ee;
     --input-bg: #1e293b;
     --input-border: #334155;
+    --hover: rgba(255, 255, 255, 0.03);
+  }
+  :root { color-scheme: dark; }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f3f4f6;
+    --card: #ffffff;
+    --card-border: #d9dee6;
+    --accent: #b45309;
+    --accent-dim: #fde7c3;
+    --text: #1f2937;
+    --text-dim: #5b6674;
+    --text-bright: #0f172a;
+    --green: #047857;
+    --red: #b91c1c;
+    --blue: #1d4ed8;
+    --purple: #6d28d9;
+    --cyan: #0e7490;
+    --input-bg: #eef1f5;
+    --input-border: #c3ccd8;
+    --hover: rgba(0, 0, 0, 0.04);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -74,6 +103,30 @@
   }
 
   .aircraft-badge svg { width: 16px; height: 16px; fill: var(--accent); }
+
+  .theme-toggle {
+    display: inline-flex;
+    margin-top: 1.25rem;
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    padding: 3px;
+    background: var(--card);
+  }
+
+  .theme-toggle button {
+    border: 0;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .theme-toggle button.active { background: var(--accent); color: var(--bg); }
 
   h1 {
     font-family: 'IBM Plex Mono', monospace;
@@ -128,7 +181,7 @@
     background: var(--accent);
   }
 
-  .tab-btn:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.03); }
+  .tab-btn:hover:not(.active) { color: var(--text); background: var(--hover); }
 
   .tab-content { display: none; }
   .tab-content.active { display: block; }
@@ -487,6 +540,10 @@
     </div>
     <h1>Performance Calculator</h1>
     <p class="subtitle">Climb, Cruise Speed & Engine Performance från POH</p>
+    <div class="theme-toggle" role="group" aria-label="Färgtema">
+      <button type="button" data-theme-btn="dark" aria-pressed="false" onclick="setTheme('dark')">☾ Mörkt</button>
+      <button type="button" data-theme-btn="light" aria-pressed="false" onclick="setTheme('light')">☀ Ljust</button>
+    </div>
   </header>
 
   <!-- Tab bar -->
@@ -534,19 +591,15 @@
       </div>
 
       <div class="panel full">
-        <div class="panel-label">Mixture</div>
-        <div class="toggle-row">
-          <button class="toggle-btn active" data-clbmix="leaned" onclick="setClimbMix('leaned')">Leaned 100°F ROP</button>
-          <button class="toggle-btn" data-clbmix="rich" onclick="setClimbMix('rich')">Full Rich</button>
-        </div>
-        <div class="conditions" style="margin-top:0.75rem;">
-          <span>76 KIAS</span><span>Full Throttle</span><span>2550 lbs</span>
+        <div class="panel-label" style="margin-bottom:0.5rem;">Förutsättningar</div>
+        <div class="conditions">
+          <span>76 KIAS</span><span>Full Throttle</span><span>2550 lbs</span><span>Full rich, leaned över ~5000 ft DA</span>
         </div>
       </div>
 
       <div class="panel full">
         <div class="panel-label">Resultat — Climb</div>
-        <div class="results-grid">
+        <div class="results-grid-4">
           <div class="result-card time">
             <div class="result-icon">⏱</div>
             <div class="result-title">Tid</div>
@@ -565,16 +618,22 @@
             <div class="result-value" id="clb_resFuel">—</div>
             <div class="result-unit">liter</div>
           </div>
+          <div class="result-card rpm">
+            <div class="result-icon">📈</div>
+            <div class="result-title">ROC vid TOC</div>
+            <div class="result-value" id="clb_resRoc">—</div>
+            <div class="result-unit">ft/min</div>
+          </div>
         </div>
+        <div class="isa-indicator warm" id="clb_limit" style="display:none; margin-top:0.75rem;"></div>
         <div class="breakdown">
-          <div class="breakdown-title">Beräkningsdetaljer (kumulativt från sea level)</div>
+          <div class="breakdown-title">Beräkningsdetaljer (kumulativt från sea level, diagramhöjd)</div>
           <div class="breakdown-row"><span class="label">Till cruise altitude</span><span class="val" id="clb_bdCru">—</span></div>
           <div class="breakdown-row"><span class="label">Till departure altitude</span><span class="val" id="clb_bdDep">—</span></div>
           <div class="breakdown-row highlight"><span class="label">Netto (cruise − departure)</span><span class="val" id="clb_bdNet">—</span></div>
         </div>
         <div class="note">
-          <strong>Obs:</strong> Inkluderar bränsletillägg för start, taxi och takeoff.
-          Interpolerade värden från POH-diagram — använd alltid originalkällan för operativ flygplanering.
+          <strong>Fig. 5-17 / 5-15:</strong> Tid, distans och bränsle samt stighastighet. Tillägget för start, taxi och takeoff (0,6 gal) faller bort i subtraktionen mellan cruise och departure. OAT går in via diagrammets höjdskala precis som i POH. Ett enda kurvset i POH — mixture-noten är procedur, inte en separat kurva. Avläst ±5 %. Använd alltid originalkällan för operativ flygplanering.
         </div>
       </div>
     </div>
@@ -657,9 +716,10 @@
             <div class="result-unit">NM (48 USG)</div>
           </div>
         </div>
+        <div class="isa-indicator warm" id="cru_limit" style="display:none; margin-top:0.75rem;"></div>
         <div class="note" style="margin-top:1.25rem;">
-          <strong>Speed Power (Economy Cruise):</strong> Best economy mixture leaned to peak EGT. Wheel fairings installed, 2550 lbs.<br>
-          <strong>Engine Performance:</strong> Best power mixture leaned 100°F ROP. Fuel flow och RPM per power setting.<br>
+          <strong>Speed Power (Fig. 5-21 / 5-23):</strong> TAS för best power (100°F ROP) resp. best economy (peak EGT). Wheel fairings installed, 2550 lbs. POH ger inga economy-TAS över 65 %.<br>
+          <strong>Engine Performance (Fig. 5-19):</strong> RPM (best power mixture) och fuel flow per power setting. Över ca 7 500 ft DA nås inte 75 % — kalkylatorn begränsar till full throttle.<br>
           Räckvidd baserad på 48 US gallon totalt med 45 min VFR-reserv (vid aktuell fuel flow).
         </div>
       </div>
@@ -739,8 +799,7 @@
           <div class="breakdown-row highlight"><span class="label">Netto (cruise − destination)</span><span class="val" id="des_bdNet">—</span></div>
         </div>
         <div class="note">
-          <strong>Obs:</strong> Nedstigning vid 122 KIAS, 2500 RPM, 2550 lbs bruttovikt.
-          Interpolerade värden från POH-diagram — använd alltid originalkällan för operativ flygplanering.
+          <strong>Fig. 5-31:</strong> Nedstigning vid 122 KIAS, 2500 RPM, 2550 lbs. Kurvorna är räta: 2,4 min, 5,7 NM och 0,29 gal per 1000 ft diagramhöjd. Avläst ±5 %. Använd alltid originalkällan för operativ flygplanering.
         </div>
       </div>
     </div>
@@ -748,121 +807,160 @@
 </div>
 
 <script>
+// Cookie without a path so it covers exactly this folder (all the tool pages live beside index.html).
+function syncThemeButtons(t) {
+  document.querySelectorAll('[data-theme-btn]').forEach(b => {
+    var active = b.dataset.themeBtn === t;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-pressed', active);
+  });
+}
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  document.cookie = 'theme=' + t + '; max-age=31536000; SameSite=Lax';
+  syncThemeButtons(t);
+}
+syncThemeButtons(document.documentElement.dataset.theme);
+
 const GAL_TO_L = 3.7854;
 const TOTAL_FUEL_GAL = 48;
 
 // ═══════════════════════════════════════════
-// CLIMB DATA (cumulative from sea level, ISA)
+// CLIMB — TIME, DISTANCE AND FUEL TO CLIMB (POH Fig. 5-17)
+// 76 KIAS, full throttle, 2550 lbs. The chart's left panel maps pressure altitude and
+// OAT to a chart altitude H; the three curves are functions of H, cumulative from sea
+// level, so a climb is curve(H_cruise) - curve(H_departure). H equals the pressure
+// altitude at ISA and moves climbSlope(PA) ft per degC of ISA deviation, read from the
+// chart's pressure-altitude lines (~4 ft/degC at sea level, ~90 ft/degC at 12 000 ft).
+// The POH draws a single set of curves; its mixture note (full rich low, leaned high)
+// is procedure, not a second curve. The chart's start/taxi/takeoff fuel allowance
+// (~0.6 gal, the sea-level intercept) cancels out in the cruise-minus-departure subtraction.
+// Chart example: 2000 ft/21C -> 6000 ft/13C = 8.5 min, 11.5 nm, 1.0 gal.
 // ═══════════════════════════════════════════
-const climbLeaned = {
-  0:     { time: 0,    fuel: 0,    dist: 0 },
-  1000:  { time: 2,    fuel: 0.4,  dist: 2.5 },
-  2000:  { time: 4,    fuel: 0.8,  dist: 5 },
-  3000:  { time: 6,    fuel: 1.2,  dist: 8 },
-  4000:  { time: 8.5,  fuel: 1.6,  dist: 11 },
-  5000:  { time: 11,   fuel: 2.0,  dist: 14.5 },
-  6000:  { time: 13.5, fuel: 2.5,  dist: 18.5 },
-  7000:  { time: 16.5, fuel: 3.0,  dist: 23 },
-  8000:  { time: 20,   fuel: 3.5,  dist: 28 },
-  9000:  { time: 24,   fuel: 4.2,  dist: 34 },
-  10000: { time: 29,   fuel: 5.0,  dist: 41 },
-  11000: { time: 35,   fuel: 6.0,  dist: 50 },
-  12000: { time: 43,   fuel: 7.2,  dist: 62 }
+const climbChart = {
+  0:     { time: 0,    dist: 0,    fuel: 0.6 },
+  1000:  { time: 1.4,  dist: 2.0,  fuel: 0.8 },
+  2000:  { time: 2.8,  dist: 4.1,  fuel: 0.97 },
+  3000:  { time: 4.1,  dist: 5.9,  fuel: 1.2 },
+  4000:  { time: 5.9,  dist: 8.0,  fuel: 1.4 },
+  5000:  { time: 8.0,  dist: 10.8, fuel: 1.65 },
+  6000:  { time: 10.1, dist: 14.0, fuel: 1.87 },
+  7000:  { time: 12.7, dist: 17.5, fuel: 2.3 },
+  8000:  { time: 15.2, dist: 21.3, fuel: 2.8 },
+  9000:  { time: 18.2, dist: 25.6, fuel: 3.3 },
+  10000: { time: 21.7, dist: 30.0, fuel: 3.9 },
+  11000: { time: 25.4, dist: 35.5, fuel: 4.5 },
+  12000: { time: 29.8, dist: 42.5, fuel: 5.0 }
 };
-
-const climbRich = {
-  0:     { time: 0,    fuel: 0,    dist: 0 },
-  1000:  { time: 2,    fuel: 0.5,  dist: 2.5 },
-  2000:  { time: 4,    fuel: 1.0,  dist: 5 },
-  3000:  { time: 6.5,  fuel: 1.5,  dist: 8.5 },
-  4000:  { time: 9,    fuel: 2.0,  dist: 12 },
-  5000:  { time: 11.5, fuel: 2.6,  dist: 15.5 },
-  6000:  { time: 14.5, fuel: 3.2,  dist: 20 },
-  7000:  { time: 18,   fuel: 3.8,  dist: 25 },
-  8000:  { time: 22,   fuel: 4.5,  dist: 31 },
-  9000:  { time: 26.5, fuel: 5.3,  dist: 38 },
-  10000: { time: 32,   fuel: 6.2,  dist: 46 },
-  11000: { time: 39,   fuel: 7.4,  dist: 56 },
-  12000: { time: 48,   fuel: 8.8,  dist: 70 }
-};
+function climbChartAlt(pa, oat) { return pa + (4 + 7 * pa / 1000) * (oat - getISA(pa)); }
 
 // ═══════════════════════════════════════════
-// DESCENT DATA (cumulative from sea level, ISA)
-// 122 KIAS, 2500 RPM, 2550 lbs
-// Extracted from Time, Distance and Fuel to Descend chart
-// Same subtraction method as climb: cruise_val − dest_val
+// CLIMB PERFORMANCE (POH Fig. 5-15) — rate of climb, ft/min, 2550 lbs, full throttle.
+// The chart altitude here follows density altitude (~100 ft per degC of ISA deviation).
+// Chart example: 3600 ft/-1C -> 620 ft/min. Service ceiling 13 650 ft.
 // ═══════════════════════════════════════════
-const descentData = {
-  0:     { time: 0,    fuel: 0,    dist: 0 },
-  1000:  { time: 3,    fuel: 0.4,  dist: 5.5 },
-  2000:  { time: 6,    fuel: 0.8,  dist: 11 },
-  3000:  { time: 8.5,  fuel: 1.1,  dist: 16 },
-  4000:  { time: 10.5, fuel: 1.4,  dist: 21 },
-  5000:  { time: 13,   fuel: 1.7,  dist: 27 },
-  6000:  { time: 15.5, fuel: 2.0,  dist: 33 },
-  7000:  { time: 18,   fuel: 2.3,  dist: 38 },
-  8000:  { time: 21,   fuel: 2.6,  dist: 44 },
-  9000:  { time: 23.5, fuel: 3.0,  dist: 49 },
-  10000: { time: 26,   fuel: 3.4,  dist: 54 },
-  11000: { time: 29,   fuel: 3.8,  dist: 60 },
-  12000: { time: 32,   fuel: 4.2,  dist: 66 }
-};
-// The POH charts work by: OAT + pressure alt → density alt → result
+const rocChart = { 0: 743, 1000: 693, 2000: 653, 3000: 609, 4000: 570, 5000: 530, 6000: 488, 7000: 446, 8000: 397, 9000: 360, 10000: 313, 11000: 275, 12000: 238, 13000: 195 };
+function rocChartAlt(pa, oat) { return pa + 100 * (oat - getISA(pa)); }
+
+// ═══════════════════════════════════════════
+// DESCENT — TIME, DISTANCE AND FUEL TO DESCEND (POH Fig. 5-31)
+// 122 KIAS, 2500 RPM, 2550 lbs. The curves are straight lines in chart altitude, so only
+// the slopes matter for cruise - destination. The left panel's pressure-altitude lines
+// slope the other way from the climb chart: warmer than ISA lowers H.
+// Chart example: 6000 ft/13C -> 2300 ft/21C = 8.5 min, 20.5 nm, 1.0 gal.
+// ═══════════════════════════════════════════
+const DESCENT_PER_1000FT = { time: 2.38, dist: 5.73, fuel: 0.29 };
+const descentSlope = { 0: 0, 2000: -4, 4000: -8, 6000: -12, 8000: -20, 10000: -30, 12000: -40 };
+function descentChartAlt(pa, oat) { return pa + lerp(descentSlope, pa) * (oat - getISA(pa)); }
+// ═══════════════════════════════════════════
+// CRUISE — SPEED POWER (POH Fig. 5-21 best power, Fig. 5-23 best economy)
+// TAS (kts) by density altitude and % power. 2550 lbs, wheel fairings installed.
+// The POH charts resolve OAT + pressure alt → density alt → TAS, so the tables
+// are keyed by density altitude. Digitized from the chart scans, ±1 kt.
 //
-// Verified anchor points:
-//   DA≈1200 (3000ft/-6°C), 65% → TAS 110 kt
-//   DA≈5500 (5500ft/4°C),  65% → TAS ~116 kt (chart example)
-//   DA≈6470 (6000ft/13°C), 65% → TAS ~116 kt (chart example)
+// Best power (100°F ROP): the 75% curve meets the "2650 RPM or full throttle"
+// line at ~7500 ft DA. Above that the 75% column is a straight extrapolation
+// that only serves the 65–75% interpolation; requests beyond the full-throttle
+// limit are clamped in calcCruise() and use fullThrottleTAS instead.
+// Best economy (peak EGT): the POH only charts 55% and 65%.
 //
-// Speed Power - Economy Cruise: TAS by density alt & power
+// Chart examples: 5500 ft / -1°C / 55% best power → 101 kt
+//                 6000 ft / 13°C / 65% economy   → 116 kt
 // ═══════════════════════════════════════════
 const cruiseTAS = {
-  // { densityAlt: { power%: TAS_kts } }
-  // Economy cruise, wheel fairings, 2550 lbs
-  // Anchor: DA≈1200, 65% → 110 kt;  DA≈7200, 65% → 116 kt
-  0:     { 55: 97,  65: 108 },
-  2000:  { 55: 99,  65: 111 },
-  4000:  { 55: 101, 65: 113 },
-  6000:  { 55: 103, 65: 115 },
-  8000:  { 55: 106, 65: 117 },
-  10000: { 55: 109, 65: 120 },
-  12000: { 55: 113, 65: 124 }
+  best_power: {
+    0:     { 55: 95,    65: 107.5, 75: 116 },
+    1000:  { 55: 96,    65: 109,   75: 117 },
+    2000:  { 55: 97,    65: 110,   75: 118.5 },
+    3000:  { 55: 98,    65: 111,   75: 119.5 },
+    4000:  { 55: 99,    65: 112.5, 75: 121 },
+    5000:  { 55: 100,   65: 114,   75: 122.5 },
+    6000:  { 55: 101.5, 65: 115.5, 75: 125 },
+    7000:  { 55: 102.5, 65: 117,   75: 126.5 },
+    8000:  { 55: 104,   65: 118,   75: 128 },    // 75%: extrapolated from here
+    9000:  { 55: 105,   65: 119.5, 75: 129.5 },
+    10000: { 55: 106,   65: 120.5, 75: 131 },
+    11000: { 55: 107.5, 65: 122.5, 75: 132.5 },
+    12000: { 55: 108.5, 65: 123.5, 75: 134 }
+  },
+  economy: {
+    0:     { 55: 94.5,  65: 107.5 },
+    1000:  { 55: 95.5,  65: 109 },
+    2000:  { 55: 96.5,  65: 110 },
+    3000:  { 55: 97,    65: 111 },
+    4000:  { 55: 98,    65: 112.5 },
+    5000:  { 55: 99,    65: 113.5 },
+    6000:  { 55: 100,   65: 115 },
+    7000:  { 55: 101,   65: 116 },
+    8000:  { 55: 102,   65: 116.5 },
+    9000:  { 55: 103,   65: 118 },
+    10000: { 55: 104,   65: 119 },
+    11000: { 55: 105,   65: 120 },
+    12000: { 55: 106,   65: 121 }
+  }
+};
+const ECONOMY_MAX_POWER = 65; // Fig. 5-23 has no curve above 65%
+
+// TAS at 2650 RPM or full throttle, best power mixture (Fig. 5-21 limit line)
+const fullThrottleTAS = {
+  0: 128, 1000: 128, 2000: 128.5, 3000: 128.5, 4000: 129, 5000: 129, 6000: 129,
+  7000: 128, 8000: 127.5, 9000: 127, 10000: 126, 11000: 125, 12000: 124
 };
 
+// Highest % power obtainable at full throttle, read where the power curves
+// meet the full-throttle line: 75% up to ~7500 ft DA, 65% at 12 000 ft.
+// Consistent with Fig. 5-19, where the 70% RPM line ends at ~9800 ft DA.
+// Fig. 5-19's own 75% line ends at ~8000 ft DA; the ~500 ft gap is read-off
+// noise between the two charts — the speed-power chart's 7500 ft is used here
+// since this function feeds TAS, not RPM.
+function maxPowerAvailable(densAlt) {
+  if (densAlt <= 7500) return 75;
+  return 75 - 10 * Math.min(densAlt - 7500, 4500) / 4500;
+}
+
 // ═══════════════════════════════════════════
-// ENGINE PERFORMANCE — RPM by density alt & power
-// Best Power mixture (100°F ROP)
-// Higher density alt → higher RPM needed for same power
-//
-// Verified:
-//   DA≈1200, 65% → 2350 RPM
-//   DA≈5500, 65% → 2450 RPM
+// ENGINE PERFORMANCE — RPM by density alt & power (POH Fig. 5-19)
+// Best power mixture (100°F ROP). The chart lines are straight, ~20.6 RPM per
+// 1000 ft DA, so two rows suffice. 75% ends at ~8000 ft DA and 70% at ~9800 ft
+// (full throttle) — handled by maxPowerAvailable().
+// Chart example: 5500 ft / 4°C / 65% → 2450 RPM
 // ═══════════════════════════════════════════
 const cruiseRPM = {
-  // { densityAlt: { power%: RPM } }
-  0:     { 55: 2170, 60: 2240, 65: 2320, 70: 2400, 75: 2470 },
-  2000:  { 55: 2200, 60: 2275, 65: 2365, 70: 2435, 75: 2505 },
-  4000:  { 55: 2230, 60: 2310, 65: 2410, 70: 2470, 75: 2540 },
-  6000:  { 55: 2260, 60: 2350, 65: 2460, 70: 2520, 75: 2580 },
-  8000:  { 55: 2300, 60: 2400, 65: 2500, 70: 2570, 75: 2630 },
-  10000: { 55: 2350, 60: 2450, 65: 2560, 70: 2630, 75: 2680 },
-  12000: { 55: 2420, 60: 2520, 65: 2620, 70: 2690, 75: 2720 }
+  0:     { 55: 2167, 60: 2246, 65: 2328, 70: 2397, 75: 2466 },
+  12000: { 55: 2414, 60: 2493, 65: 2575, 70: 2644, 75: 2713 }
 };
+const RPM_MAX = 2650;
 
-// Fuel flow gallons per hour from POH table
-// Best Power (100°F ROP) and Best Economy (peak EGT)
+// Fuel flow, US gal/h — table on POH Fig. 5-19 (60% and 70% are interpolated)
 const fuelFlow = {
   55: { best_power: 7.8,  economy: 6.3 },
-  60: { best_power: 8.4,  economy: 6.9 },
   65: { best_power: 9.0,  economy: 7.6 },
-  70: { best_power: 9.8,  economy: 8.2 },
   75: { best_power: 10.5, economy: 8.8 }
 };
 
 // ═══════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════
-let climbMix = 'leaned';
 let cruMix = 'economy';
 
 function getISA(alt) { return 15 - (alt * 1.98 / 1000); }
@@ -876,14 +974,16 @@ function updateISA(id, alt, oat) {
 
 function lerp(data, alt) {
   const alts = Object.keys(data).map(Number).sort((a,b) => a - b);
-  if (alt <= alts[0]) return { ...data[alts[0]] };
-  if (alt >= alts[alts.length - 1]) return { ...data[alts[alts.length - 1]] };
+  const clone = v => typeof v === 'number' ? v : { ...v };
+  if (alt <= alts[0]) return clone(data[alts[0]]);
+  if (alt >= alts[alts.length - 1]) return clone(data[alts[alts.length - 1]]);
   let lo, hi;
   for (let i = 0; i < alts.length - 1; i++) {
     if (alt >= alts[i] && alt <= alts[i + 1]) { lo = alts[i]; hi = alts[i + 1]; break; }
   }
   const t = (alt - lo) / (hi - lo);
   const a = data[lo], b = data[hi];
+  if (typeof a === 'number') return a + t * (b - a);
   const result = {};
   for (const k of Object.keys(a)) {
     if (typeof a[k] === 'number') result[k] = a[k] + t * (b[k] - a[k]);
@@ -945,11 +1045,6 @@ function switchTab(tab) {
 // ═══════════════════════════════════════════
 // CLIMB CALC
 // ═══════════════════════════════════════════
-function setClimbMix(m) {
-  climbMix = m;
-  document.querySelectorAll('[data-clbmix]').forEach(b => b.classList.toggle('active', b.dataset.clbmix === m));
-  calcClimb();
-}
 
 function calcClimb() {
   const depAlt = +document.getElementById('clb_depAlt').value;
@@ -965,25 +1060,28 @@ function calcClimb() {
   updateISA('clb_depIsa', depAlt, depTemp);
   updateISA('clb_cruIsa', cruAlt, cruTemp);
 
-  const data = climbMix === 'leaned' ? climbLeaned : climbRich;
-  const cruBase = lerp(data, cruAlt);
-  const depBase = lerp(data, depAlt);
-
-  // Temp correction
-  const cruDev = cruTemp - getISA(cruAlt);
-  const depDev = depTemp - getISA(depAlt);
-  const cruF = 1 + cruDev * 0.01;
-  const depF = 1 + depDev * 0.01;
-
-  const cru = { time: cruBase.time * cruF, fuel: cruBase.fuel * cruF, dist: cruBase.dist * cruF };
-  const dep = { time: depBase.time * depF, fuel: depBase.fuel * depF, dist: depBase.dist * depF };
+  // OAT enters through the chart altitude, exactly as the chart's left panel does
+  const cruH = climbChartAlt(cruAlt, cruTemp);
+  const depH = climbChartAlt(depAlt, depTemp);
+  const cru = lerp(climbChart, cruH);
+  const dep = lerp(climbChart, depH);
 
   let nt = cru.time - dep.time, nd = cru.dist - dep.dist, nf = cru.fuel - dep.fuel;
-  if (cruAlt <= depAlt) { nt = 0; nd = 0; nf = 0; }
+  const inverted = cruH <= depH;
+  if (inverted) { nt = 0; nd = 0; nf = 0; }
+
+  const rocH = rocChartAlt(cruAlt, cruTemp);
+  const roc = lerp(rocChart, rocH);
+  const offChart = cruH > 12000 || depH > 12000 || rocH > 13000;
 
   document.getElementById('clb_resTime').textContent = nt.toFixed(1);
   document.getElementById('clb_resDist').textContent = nd.toFixed(1);
   document.getElementById('clb_resFuel').textContent = (nf * GAL_TO_L).toFixed(1);
+  document.getElementById('clb_resRoc').textContent = Math.round(roc / 5) * 5;
+  const limitEl = document.getElementById('clb_limit');
+  limitEl.textContent = inverted ? 'Diagramhöjd cruise ≤ departure – ingen stigning enligt diagrammet'
+    : offChart ? `Diagramhöjd ${Math.round(Math.max(cruH, depH, rocH)).toLocaleString()} ft – över POH-diagrammets 12 000/13 000 ft, värdet är klampat` : '';
+  limitEl.style.display = (inverted || offChart) ? '' : 'none';
 
   document.getElementById('clb_bdCru').textContent = `${cru.time.toFixed(1)} min / ${cru.dist.toFixed(1)} nm / ${(cru.fuel * GAL_TO_L).toFixed(1)} L`;
   document.getElementById('clb_bdDep').textContent = `${dep.time.toFixed(1)} min / ${dep.dist.toFixed(1)} nm / ${(dep.fuel * GAL_TO_L).toFixed(1)} L`;
@@ -1015,15 +1113,42 @@ function calcCruise() {
   const isaTemp = getISA(alt);
   const densAlt = alt + 120 * (temp - isaTemp);
 
+  // Charts (Fig. 5-19/5-21/5-23) only cover 0–12 000 ft DA; outside that range
+  // lerp()/lerpNested() clamp to the nearest chart row instead of extrapolating,
+  // so flag it rather than presenting a clamped value as read off the chart.
+  const outOfChart = densAlt < 0 || densAlt > 12000;
+
+  // Power actually obtainable: full-throttle limit above ~7500 ft DA
+  const maxPower = maxPowerAvailable(densAlt);
+  const fullThrottle = power > maxPower + 0.5;
+  const usedPower = fullThrottle ? maxPower : power;
+  // Economy TAS is only charted up to 65%; RPM and fuel flow still apply
+  const noEconomyTAS = cruMix === 'economy' && usedPower > ECONOMY_MAX_POWER;
+  // Above ~7500 ft DA the economy chart's own power ceiling can be below the full-throttle limit too
+  const noEconomyPower = cruMix === 'economy' && fullThrottle && maxPower > ECONOMY_MAX_POWER;
+
+  let limitMsg = '';
+  if (outOfChart) limitMsg = `Utanför POH-diagram (0–12 000 ft DA), värden ej tillförlitliga`;
+  else if (noEconomyTAS && noEconomyPower) limitMsg = `Full throttle vid ${Math.round(densAlt).toLocaleString()} ft DA — max ca ${Math.round(maxPower)} % power, och POH saknar TAS över ${ECONOMY_MAX_POWER} % för best economy (Fig. 5-23)`;
+  else if (noEconomyTAS) limitMsg = `POH saknar TAS över ${ECONOMY_MAX_POWER} % för best economy (Fig. 5-23, ej digitaliserad)`;
+  else if (fullThrottle) limitMsg = `Full throttle vid ${Math.round(densAlt).toLocaleString()} ft DA — max ca ${Math.round(maxPower)} % power`;
+  const limitEl = document.getElementById('cru_limit');
+  limitEl.textContent = limitMsg;
+  limitEl.style.display = limitMsg ? '' : 'none';
+
   // TAS from density altitude
-  let tas = lerpNested(cruiseTAS, densAlt, power);
+  // Economy has no full-throttle line of its own (not digitized — Fig. 5-23 does have one);
+  // at usedPower <= 65% its 65% curve is that line
+  let tas = fullThrottle && cruMix === 'best_power' ? lerp(fullThrottleTAS, densAlt) : lerpNested(cruiseTAS[cruMix], densAlt, usedPower);
   if (!fairings) tas -= 8;
 
-  // RPM from density altitude
-  let rpm = lerpNested(cruiseRPM, densAlt, power);
+  // RPM from density altitude (best power chart; leaning afterwards does not change RPM).
+  // RPM_MAX is a safety net only — with power clamped by maxPowerAvailable(), lerpNested()
+  // cannot exceed ~2620 in practice.
+  const rpm = Math.min(lerpNested(cruiseRPM, densAlt, usedPower), RPM_MAX);
 
   // Fuel flow (not density-dependent, just power & mixture)
-  const ffGal = interpFF(power, cruMix);
+  const ffGal = interpFF(usedPower, cruMix);
   const ffL = ffGal * GAL_TO_L;
 
   // Range: usable fuel, minus 45 min reserve
@@ -1032,10 +1157,11 @@ function calcCruise() {
   const enduranceHrs = usableGal / ffGal;
   const range = enduranceHrs * tas;
 
-  document.getElementById('cru_resTas').textContent = Math.round(tas);
-  document.getElementById('cru_resRpm').textContent = Math.round(rpm / 10) * 10;
-  document.getElementById('cru_resFf').textContent = ffL.toFixed(1);
-  document.getElementById('cru_resRange').textContent = Math.round(range);
+  const noTAS = outOfChart || noEconomyTAS;
+  document.getElementById('cru_resTas').textContent = noTAS ? '—' : Math.round(tas);
+  document.getElementById('cru_resRpm').textContent = outOfChart ? '—' : Math.round(rpm / 10) * 10;
+  document.getElementById('cru_resFf').textContent = outOfChart ? '—' : ffL.toFixed(1);
+  document.getElementById('cru_resRange').textContent = noTAS ? '—' : Math.round(range);
 }
 
 // ═══════════════════════════════════════════
@@ -1055,22 +1181,15 @@ function calcDescent() {
   updateISA('des_cruIsa', cruAlt, cruTemp);
   updateISA('des_destIsa', destAlt, destTemp);
 
-  // Temperature correction same approach as climb
-  const cruBase = lerp(descentData, cruAlt);
-  const destBase = lerp(descentData, destAlt);
-
-  // Temperature correction - very light for descent
-  // The chart captures most temp effect through the OAT entry on left side
-  const cruDev = cruTemp - getISA(cruAlt);
-  const destDev = destTemp - getISA(destAlt);
-  const cruF = 1 + cruDev * 0.003;
-  const destF = 1 + destDev * 0.003;
-
-  const cru = { time: cruBase.time * cruF, fuel: cruBase.fuel * cruF, dist: cruBase.dist * cruF };
-  const dest = { time: destBase.time * destF, fuel: destBase.fuel * destF, dist: destBase.dist * destF };
+  // Straight chart lines: cumulative values are simply per-1000-ft rates times chart altitude
+  const cruH = descentChartAlt(cruAlt, cruTemp);
+  const destH = descentChartAlt(destAlt, destTemp);
+  const cumulative = h => ({ time: DESCENT_PER_1000FT.time * h / 1000, dist: DESCENT_PER_1000FT.dist * h / 1000, fuel: DESCENT_PER_1000FT.fuel * h / 1000 });
+  const cru = cumulative(cruH);
+  const dest = cumulative(destH);
 
   let nt = cru.time - dest.time, nd = cru.dist - dest.dist, nf = cru.fuel - dest.fuel;
-  if (cruAlt <= destAlt) { nt = 0; nd = 0; nf = 0; }
+  if (cruH <= destH) { nt = 0; nd = 0; nf = 0; }
 
   document.getElementById('des_resTime').textContent = nt.toFixed(1);
   document.getElementById('des_resDist').textContent = nd.toFixed(1);

@@ -19,9 +19,9 @@ All computation is client-side JavaScript. No external JS libraries — only Goo
 ### Design patterns used across files
 
 - **POH data as JS lookup tables** — Performance data is digitized from Pilot's Operating Handbook charts into nested objects keyed by altitude (ft), with arrays of `[temperature, value]` pairs or `{ power%: value }` objects.
-- **Linear interpolation** — `lerp()` / `lerpNested()` / `it()` functions interpolate between data points for altitude, temperature, power setting, and weight. The climb/cruise/descent calculator uses a "cumulative from sea level" subtraction method: `result = lerp(cruiseAlt) - lerp(departureAlt)`.
-- **Temperature correction** — ISA deviation (`OAT - ISA_temp`) is computed via `getISA(alt) = 15 - alt * 1.98/1000`. Corrections are applied as multiplicative factors (e.g., `1 + dev * 0.01` for climb).
-- **Density altitude** — `DA = PA + 120 * (OAT - ISA_temp)`, used in cruise TAS and RPM lookups.
+- **Linear interpolation** — `lerp()` / `lerpNested()` / `it()` functions interpolate between data points for altitude, temperature, power setting, and weight. The climb/cruise/descent calculator uses a "cumulative from sea level" subtraction method: `result = lerp(cruiseAlt) - lerp(departureAlt)`, evaluated at the POH chart altitude `H` rather than pressure altitude — `climbChartAlt()` / `descentChartAlt()` / `rocChartAlt()` convert PA + OAT to H the way each chart's left panel does (Fig. 5-17, 5-31, 5-15).
+- **Temperature correction** — ISA deviation (`OAT - ISA_temp`) is computed via `getISA(alt) = 15 - alt * 1.98/1000`. Climb, descent and ROC apply it through the chart altitude (see below); the takeoff/landing charts use OAT directly.
+- **Density altitude** — `DA = PA + 120 * (OAT - ISA_temp)`, used in cruise TAS and RPM lookups. Cruise tables (`cruiseTAS.best_power` / `cruiseTAS.economy`, `cruiseRPM`, `fullThrottleTAS`) are digitized from POH Fig. 5-19/5-21/5-23 and keyed by DA in 1000 ft steps; `cruiseRPM` only has the 0 and 12 000 ft rows since its lines are straight. `maxPowerAvailable(DA)` clamps requested power to the full-throttle limit (75% to ~7500 ft DA, 65% at 12 000 ft).
 - **Event-driven recalculation** — Input events trigger cascading recalcs. In the OFP, changing a single field (e.g., wind direction) propagates through: wind triangle -> WCA/GS -> time_leg -> fuel_leg -> fuel table -> mass & balance -> CG chart.
 
 ### OFP-specific details
@@ -35,15 +35,14 @@ All computation is client-side JavaScript. No external JS libraries — only Goo
 
 ### Takeoff/Landing-specific details
 
-- Four takeoff configurations: flaps-up ground roll (TB1), flaps-25 ground roll (TB2), flaps-up over 50ft (TB3), flaps-25 over 50ft (TB4). Two landing: ground roll (LB1), over 50ft (LB2).
-- Weight correction via separate interpolation tables (TW1-TW4, LW1-LW2) indexed by weight in lbs.
-- Wind correction functions (`twGR`, `tw50`, `lwGR`, `lw50`) use quadratic polynomials, different for headwind vs tailwind.
+- Four takeoff configurations: flaps-up ground roll (TB1, Fig. 5-11), flaps-25 ground roll (TB2, Fig. 5-13), flaps-up over 50ft (TB3, Fig. 5-7), flaps-25 over 50ft (TB4, Fig. 5-9). Two landing: ground roll (LB1, Fig. 5-37), over 50ft (LB2, Fig. 5-35).
+- All six charts live in one `CHARTS` object: straight pressure-altitude lines `dist = a + b*OAT` per 1000 ft (`lines`), a weight ratio per 100 lbs below 2550 (`wt`), linear head/tailwind fractions per knot (`hw`, `tw`) and the distance range the POH actually draws (`lo`, `hi`). `chartDist()` multiplies base × weight × wind × surface; weight is clamped to 2000 lbs and the base distance is floored at `lo` (both flagged), while OAT > 30 °C, tailwind > 5 kt and base above `hi` are flagged without clamping.
 - Surface factor multipliers: grass +10%, water/slush +20%/cm, wet snow +10%/cm, powder +5%/cm.
 - Results displayed in meters with feet shown as subtitle.
 
 ## UI Conventions
 
-- OFP uses a light paper-like theme (print-optimized A4). Performance calculators use a dark theme.
+- OFP uses a light paper-like theme (print-optimized A4). The index page and the two performance calculators share one CSS variable set with a dark default and a light palette under `:root[data-theme="light"]`; the theme is chosen with a toggle in each page's header, stored in a `theme` cookie (no path, so it covers the folder) and applied to `<html data-theme>` by an inline head script on every page before first paint, falling back to `prefers-color-scheme` when no cookie is set. Keep colors as variables — no hardcoded hex/rgba except low-alpha accent tints.
 - Fonts: IBM Plex Mono for data/values, DM Sans or IBM Plex Sans for labels.
 - Range sliders with live value display above. Toggle buttons for binary choices.
 - Computed/readonly fields use CSS class `computed` or `readonly-val`.
