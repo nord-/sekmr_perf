@@ -45,6 +45,9 @@ def grid(img, x0, y0, x1, y1, thr_frac=0.45, min_dist=6):
     roi = a[y0:y1, x0:x1]
 
     def peaks(prof, off):
+        if prof.max() == 0:
+            print("no dark pixels in ROI")
+            return []
         thr = prof.max() * thr_frac
         out = []
         for i in range(1, len(prof) - 1):
@@ -71,7 +74,10 @@ def overlay(img, out, ysl, px1000, xref, vref, ppu, vlo, vhi, dalo, dahi,
     """
     im = Image.open(img).convert("RGB")
     d = ImageDraw.Draw(im)
-    font = ImageFont.truetype("arial.ttf", 12)
+    try:
+        font = ImageFont.truetype("arial.ttf", 12)
+    except OSError:
+        font = ImageFont.load_default()
     x_at = lambda v: xref + (v - vref) * ppu
     y_at = lambda da: ysl - da * px1000 / 1000
     x0, x1, y_top, y_bot = x_at(vlo), x_at(vhi), y_at(dahi), y_at(dalo)

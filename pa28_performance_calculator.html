@@ -866,6 +866,9 @@ const fullThrottleTAS = {
 // Highest % power obtainable at full throttle, read where the power curves
 // meet the full-throttle line: 75% up to ~7500 ft DA, 65% at 12 000 ft.
 // Consistent with Fig. 5-19, where the 70% RPM line ends at ~9800 ft DA.
+// Fig. 5-19's own 75% line ends at ~8000 ft DA; the ~500 ft gap is read-off
+// noise between the two charts — the speed-power chart's 7500 ft is used here
+// since this function feeds TAS, not RPM.
 function maxPowerAvailable(densAlt) {
   if (densAlt <= 7500) return 75;
   return 75 - 10 * Math.min(densAlt - 7500, 4500) / 4500;
@@ -1049,26 +1052,38 @@ function calcCruise() {
   const isaTemp = getISA(alt);
   const densAlt = alt + 120 * (temp - isaTemp);
 
+  // Charts (Fig. 5-19/5-21/5-23) only cover 0–12 000 ft DA; outside that range
+  // lerp()/lerpNested() clamp to the nearest chart row instead of extrapolating,
+  // so flag it rather than presenting a clamped value as read off the chart.
+  const outOfChart = densAlt < 0 || densAlt > 12000;
+
   // Power actually obtainable: full-throttle limit above ~7500 ft DA
   const maxPower = maxPowerAvailable(densAlt);
-  const fullThrottle = power > maxPower;
+  const fullThrottle = power > maxPower + 0.5;
   const usedPower = fullThrottle ? maxPower : power;
   // Economy TAS is only charted up to 65%; RPM and fuel flow still apply
   const noEconomyTAS = cruMix === 'economy' && usedPower > ECONOMY_MAX_POWER;
+  // Above ~7500 ft DA the economy chart's own power ceiling can be below the full-throttle limit too
+  const noEconomyPower = cruMix === 'economy' && fullThrottle && maxPower > ECONOMY_MAX_POWER;
 
   let limitMsg = '';
-  if (noEconomyTAS) limitMsg = `POH saknar TAS över ${ECONOMY_MAX_POWER} % för best economy (Fig. 5-23)`;
+  if (outOfChart) limitMsg = `Utanför POH-diagram (0–12 000 ft DA), värden ej tillförlitliga`;
+  else if (noEconomyTAS && noEconomyPower) limitMsg = `Full throttle vid ${Math.round(densAlt).toLocaleString()} ft DA — max ca ${Math.round(maxPower)} % power, och POH saknar TAS över ${ECONOMY_MAX_POWER} % för best economy (Fig. 5-23)`;
+  else if (noEconomyTAS) limitMsg = `POH saknar TAS över ${ECONOMY_MAX_POWER} % för best economy (Fig. 5-23, ej digitaliserad)`;
   else if (fullThrottle) limitMsg = `Full throttle vid ${Math.round(densAlt).toLocaleString()} ft DA — max ca ${Math.round(maxPower)} % power`;
   const limitEl = document.getElementById('cru_limit');
   limitEl.textContent = limitMsg;
   limitEl.style.display = limitMsg ? '' : 'none';
 
   // TAS from density altitude
-  // Economy has no full-throttle line of its own; at usedPower <= 65% its 65% curve is that line
+  // Economy has no full-throttle line of its own (not digitized — Fig. 5-23 does have one);
+  // at usedPower <= 65% its 65% curve is that line
   let tas = fullThrottle && cruMix === 'best_power' ? lerp(fullThrottleTAS, densAlt) : lerpNested(cruiseTAS[cruMix], densAlt, usedPower);
   if (!fairings) tas -= 8;
 
-  // RPM from density altitude (best power chart; leaning afterwards does not change RPM)
+  // RPM from density altitude (best power chart; leaning afterwards does not change RPM).
+  // RPM_MAX is a safety net only — with power clamped by maxPowerAvailable(), lerpNested()
+  // cannot exceed ~2620 in practice.
   const rpm = Math.min(lerpNested(cruiseRPM, densAlt, usedPower), RPM_MAX);
 
   // Fuel flow (not density-dependent, just power & mixture)
@@ -1081,10 +1096,11 @@ function calcCruise() {
   const enduranceHrs = usableGal / ffGal;
   const range = enduranceHrs * tas;
 
-  document.getElementById('cru_resTas').textContent = noEconomyTAS ? '—' : Math.round(tas);
-  document.getElementById('cru_resRpm').textContent = Math.round(rpm / 10) * 10;
-  document.getElementById('cru_resFf').textContent = ffL.toFixed(1);
-  document.getElementById('cru_resRange').textContent = noEconomyTAS ? '—' : Math.round(range);
+  const noTAS = outOfChart || noEconomyTAS;
+  document.getElementById('cru_resTas').textContent = noTAS ? '—' : Math.round(tas);
+  document.getElementById('cru_resRpm').textContent = outOfChart ? '—' : Math.round(rpm / 10) * 10;
+  document.getElementById('cru_resFf').textContent = outOfChart ? '—' : ffL.toFixed(1);
+  document.getElementById('cru_resRange').textContent = noTAS ? '—' : Math.round(range);
 }
 
 // ═══════════════════════════════════════════
