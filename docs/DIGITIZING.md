@@ -130,7 +130,7 @@ These share the layout: a left panel of pressure-altitude lines against OAT and 
 | 111 (Fig. 5-31) | 1304 | 73.2 | 655 | 7.19 | 947 | 14.63 |
 
 - The pressure-altitude lines are too flat for `trace`; their slopes were read from ±100 px tiles and pinned with the worked examples: Fig. 5-17 ≈ 4 + 7·PA/1000 ft per °C (the lines rise with OAT), Fig. 5-31 ≈ 0 at sea level to −40 ft/°C at 12 000 ft (the lines fall with OAT), Fig. 5-15 ≈ 100 ft/°C (density altitude).
-- Fig. 5-17 has one set of curves; the "mixture leaned / full rich" boundary is a procedure note. Fuel includes the start, taxi and takeoff allowance (≈0.6 gal at sea level).
+- Fig. 5-17 has one set of curves; the "mixture leaned / full rich" boundary is a procedure note. The chart's start, taxi and takeoff fuel allowance (≈0.6 gal, the sea-level intercept) cancels out in the cruise-minus-departure subtraction, so it is not included in the calculator's climb-fuel result.
 - Fig. 5-31's three curves are straight lines: 2.38 min, 5.73 nm and 0.29 gal per 1000 ft of `H` (their sea-level intercepts cancel in cruise − destination).
 - Fig. 5-15's rate-of-climb line is nearly straight, ≈743 − 0.0415·H ft/min.
 

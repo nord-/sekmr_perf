@@ -576,7 +576,7 @@
           <div class="breakdown-row highlight"><span class="label">Netto (cruise − departure)</span><span class="val" id="clb_bdNet">—</span></div>
         </div>
         <div class="note">
-          <strong>Fig. 5-17 / 5-15:</strong> Tid, distans och bränsle (inkl. tillägg för start, taxi och takeoff) samt stighastighet. OAT går in via diagrammets höjdskala precis som i POH. Ett enda kurvset i POH — mixture-noten är procedur, inte en separat kurva. Avläst ±5 %. Använd alltid originalkällan för operativ flygplanering.
+          <strong>Fig. 5-17 / 5-15:</strong> Tid, distans och bränsle samt stighastighet. Tillägget för start, taxi och takeoff (0,6 gal) faller bort i subtraktionen mellan cruise och departure. OAT går in via diagrammets höjdskala precis som i POH. Ett enda kurvset i POH — mixture-noten är procedur, inte en separat kurva. Avläst ±5 %. Använd alltid originalkällan för operativ flygplanering.
         </div>
       </div>
     </div>
@@ -761,7 +761,8 @@ const TOTAL_FUEL_GAL = 48;
 // altitude at ISA and moves climbSlope(PA) ft per degC of ISA deviation, read from the
 // chart's pressure-altitude lines (~4 ft/degC at sea level, ~90 ft/degC at 12 000 ft).
 // The POH draws a single set of curves; its mixture note (full rich low, leaned high)
-// is procedure, not a second curve. Fuel includes the start, taxi and takeoff allowance.
+// is procedure, not a second curve. The chart's start/taxi/takeoff fuel allowance
+// (~0.6 gal, the sea-level intercept) cancels out in the cruise-minus-departure subtraction.
 // Chart example: 2000 ft/21C -> 6000 ft/13C = 8.5 min, 11.5 nm, 1.0 gal.
 // ═══════════════════════════════════════════
 const climbChart = {
@@ -991,18 +992,21 @@ function calcClimb() {
   const dep = lerp(climbChart, depH);
 
   let nt = cru.time - dep.time, nd = cru.dist - dep.dist, nf = cru.fuel - dep.fuel;
-  if (cruH <= depH) { nt = 0; nd = 0; nf = 0; }
+  const inverted = cruH <= depH;
+  if (inverted) { nt = 0; nd = 0; nf = 0; }
 
-  const roc = lerp(rocChart, rocChartAlt(cruAlt, cruTemp));
-  const offChart = cruH > 12000 || depH > 12000;
+  const rocH = rocChartAlt(cruAlt, cruTemp);
+  const roc = lerp(rocChart, rocH);
+  const offChart = cruH > 12000 || depH > 12000 || rocH > 13000;
 
   document.getElementById('clb_resTime').textContent = nt.toFixed(1);
   document.getElementById('clb_resDist').textContent = nd.toFixed(1);
   document.getElementById('clb_resFuel').textContent = (nf * GAL_TO_L).toFixed(1);
   document.getElementById('clb_resRoc').textContent = Math.round(roc / 5) * 5;
   const limitEl = document.getElementById('clb_limit');
-  limitEl.textContent = offChart ? `Diagramhöjd ${Math.round(Math.max(cruH, depH)).toLocaleString()} ft – över POH-diagrammets 12 000 ft, värdet är klampat` : '';
-  limitEl.style.display = offChart ? '' : 'none';
+  limitEl.textContent = inverted ? 'Diagramhöjd cruise ≤ departure – ingen stigning enligt diagrammet'
+    : offChart ? `Diagramhöjd ${Math.round(Math.max(cruH, depH, rocH)).toLocaleString()} ft – över POH-diagrammets 12 000/13 000 ft, värdet är klampat` : '';
+  limitEl.style.display = (inverted || offChart) ? '' : 'none';
 
   document.getElementById('clb_bdCru').textContent = `${cru.time.toFixed(1)} min / ${cru.dist.toFixed(1)} nm / ${(cru.fuel * GAL_TO_L).toFixed(1)} L`;
   document.getElementById('clb_bdDep').textContent = `${dep.time.toFixed(1)} min / ${dep.dist.toFixed(1)} nm / ${(dep.fuel * GAL_TO_L).toFixed(1)} L`;

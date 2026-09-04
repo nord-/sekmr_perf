@@ -115,9 +115,10 @@ def directional_mask(img, slopes, thr=120):
     """Dark pixels that continue along a diagonal of one of the given slopes.
 
     Grid lines are axis-aligned and text is short, so requiring a dark pixel at
-    +-9 and +-18 px along the diagonal (slope = dy/dx, positive = down-right)
-    keeps mostly the sloping guide lines. Slopes flatter than ~0.4 px/px start
-    to pass thick horizontal grid lines; use the row/column methods instead.
+    +-9/+-18 px and +-13/+-26 px along the diagonal (slope = dy/dx, positive =
+    down-right) keeps mostly the sloping guide lines. Slopes flatter than ~0.4
+    px/px start to pass thick horizontal grid lines; use the row/column methods
+    instead.
     """
     a = np.asarray(Image.open(img).convert("L"), dtype=np.uint8)
     d = a < thr

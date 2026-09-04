@@ -36,7 +36,7 @@ All computation is client-side JavaScript. No external JS libraries — only Goo
 ### Takeoff/Landing-specific details
 
 - Four takeoff configurations: flaps-up ground roll (TB1, Fig. 5-11), flaps-25 ground roll (TB2, Fig. 5-13), flaps-up over 50ft (TB3, Fig. 5-7), flaps-25 over 50ft (TB4, Fig. 5-9). Two landing: ground roll (LB1, Fig. 5-37), over 50ft (LB2, Fig. 5-35).
-- All six charts live in one `CHARTS` object: straight pressure-altitude lines `dist = a + b*OAT` per 1000 ft (`lines`), a weight ratio per 100 lbs below 2550 (`wt`), linear head/tailwind fractions per knot (`hw`, `tw`) and the distance range the POH actually draws (`lo`, `hi`). `chartDist()` multiplies base × weight × wind × surface and flags cases outside the chart (OAT > 30 °C, tailwind > 5 kt, weight < 2000 lbs, base outside lo/hi) instead of clamping.
+- All six charts live in one `CHARTS` object: straight pressure-altitude lines `dist = a + b*OAT` per 1000 ft (`lines`), a weight ratio per 100 lbs below 2550 (`wt`), linear head/tailwind fractions per knot (`hw`, `tw`) and the distance range the POH actually draws (`lo`, `hi`). `chartDist()` multiplies base × weight × wind × surface; weight is clamped to 2000 lbs and the base distance is floored at `lo` (both flagged), while OAT > 30 °C, tailwind > 5 kt and base above `hi` are flagged without clamping.
 - Surface factor multipliers: grass +10%, water/slush +20%/cm, wet snow +10%/cm, powder +5%/cm.
 - Results displayed in meters with feet shown as subtitle.
 

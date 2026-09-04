@@ -236,8 +236,8 @@ function wtFactor(ch,lb){return Math.pow(ch.wt,(CHART_WT_REF-Math.max(CHART_WT_M
 function windFactor(ch,k,hw){return hw?1-ch.hw*k:1+ch.tw*k}
 // Full chart solution; also reports whether the POH actually charts this case
 function chartDist(ch,oat,pa,lb,k,hw,sf){
-  var base=baseDist(ch,oat,pa);
-  return {ft:base*wtFactor(ch,lb)*windFactor(ch,k,hw)*sf,off:base<ch.lo||base>ch.hi};
+  var raw=baseDist(ch,oat,pa),base=Math.max(ch.lo,raw);
+  return {ft:base*wtFactor(ch,lb)*windFactor(ch,k,hw)*sf,off:raw<ch.lo||raw>ch.hi};
 }
 var SP={c:[[2050,48],[2150,49],[2250,50],[2350,51],[2450,51],[2550,53]],d:[[2050,52],[2150,54],[2250,55],[2350,56],[2450,57],[2550,58]],e:[[2050,41],[2150,42],[2250,43],[2350,45],[2450,47],[2550,49]],f:[[2050,45],[2150,47],[2250,48],[2350,50],[2450,51],[2550,54]]};
 
@@ -293,7 +293,7 @@ function chartWarnings(wa,o,wlb,wk,hw,results){
   if(o>CHART_OAT_MAX)wa.push('w|OAT över +'+CHART_OAT_MAX+' °C – utanför POH-diagrammet, extrapolerat.');
   if(wlb<CHART_WT_MIN)wa.push('w|Vikten under diagrammets undre gräns '+CHART_WT_MIN+' lbs – räknat som '+CHART_WT_MIN+' lbs.');
   if(!hw&&wk>CHART_TAILWIND_MAX)wa.push('d|Medvind över '+CHART_TAILWIND_MAX+' kt – POH ger inga data, extrapolerat.');
-  if(results.some(function(x){return x.off}))wa.push('w|Grundsträckan ligger utanför diagrammets område – extrapolerat, verifiera mot POH.');
+  if(results.some(function(x){return x.off}))wa.push('w|Grundsträckan ligger utanför diagrammets område – under undre gränsen räknat som diagrammets lägsta värde, verifiera mot POH.');
 }
 function toSw(d){$('to_bh').classList.toggle('active',d==='h');$('to_bt').classList.toggle('active',d==='t');calcTO()}
 ['to_oat','to_pa','to_wt','to_wn'].forEach(function(id){$(id).addEventListener('input',calcTO)});
@@ -301,7 +301,7 @@ function toSw(d){$('to_bh').classList.toggle('active',d==='h');$('to_bt').classL
 // ═══ LANDING CALC ═══
 function calcLD(){
   var o=+$('ld_oat').value,p=+$('ld_pa').value,wkg=+$('ld_wt').value,wk=+$('ld_wn').value;
-  var hw=$('ld_bh').classList.contains('active'),wlb=wkg*2.20462,cl=Math.max(2e3,Math.min(2550,wlb)),sf=getSF('ld');
+  var hw=$('ld_bh').classList.contains('active'),wlb=wkg*2.20462,sf=getSF('ld');
   $('ld_oatD').textContent=(o>=0?'+':'')+o;$('ld_paD').textContent=p.toLocaleString();$('ld_wtD').textContent=wkg;$('ld_wnD').textContent=wk;
   updISA('ld_isa',p,o);
   var wa=[];
