@@ -42,7 +42,7 @@ All computation is client-side JavaScript. No external JS libraries — only Goo
 
 ## UI Conventions
 
-- OFP uses a light paper-like theme (print-optimized A4). Performance calculators use a dark theme.
+- OFP uses a light paper-like theme (print-optimized A4). The index page and the two performance calculators share one CSS variable set with a dark default and a light palette under `:root[data-theme="light"]`; the theme is chosen with a toggle in each page's header, stored in a `theme` cookie (no path, so it covers the folder) and applied to `<html data-theme>` by an inline head script on every page before first paint, falling back to `prefers-color-scheme` when no cookie is set. Keep colors as variables — no hardcoded hex/rgba except low-alpha accent tints.
 - Fonts: IBM Plex Mono for data/values, DM Sans or IBM Plex Sans for labels.
 - Range sliders with live value display above. Toggle buttons for binary choices.
 - Computed/readonly fields use CSS class `computed` or `readonly-val`.

@@ -2,6 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>
+  // The theme is chosen on the index page and kept in a cookie shared by all pages;
+  // apply it before the first paint so there is no flash of the other theme.
+  (function () {
+    var m = document.cookie.match(/(?:^|; )theme=(light|dark)/);
+    document.documentElement.dataset.theme = m ? m[1] : (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  })();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PA-28-181 Archer II (SE-KMR)</title>
 <meta name="description" content="Flight planning and performance tools for the PA-28-181 Archer II (SE-KMR): operational flight plan, climb/cruise/descent calculator, and takeoff/landing distance calculator.">
@@ -15,8 +23,22 @@
     --accent: #f59e0b;
     --accent-dim: #92400e;
     --text: #e2e8f0;
-    --text-dim: #64748b;
+    --text-dim: #94a3b8;
     --text-bright: #f8fafc;
+    --red: #f87171;
+  }
+  :root { color-scheme: dark; }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f3f4f6;
+    --card: #ffffff;
+    --card-border: #d9dee6;
+    --accent: #b45309;
+    --accent-dim: #fde7c3;
+    --text: #1f2937;
+    --text-dim: #5b6674;
+    --text-bright: #0f172a;
+    --red: #b91c1c;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -116,7 +138,7 @@
     border: 1px solid rgba(239, 68, 68, 0.25);
     border-radius: 10px;
     font-size: 0.75rem;
-    color: #f87171;
+    color: var(--red);
     line-height: 1.6;
   }
 
@@ -126,6 +148,30 @@
     font-size: 0.8rem;
     margin-bottom: 0.3rem;
   }
+
+  .theme-toggle {
+    display: inline-flex;
+    margin-top: 1.25rem;
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    padding: 3px;
+    background: var(--card);
+  }
+
+  .theme-toggle button {
+    border: 0;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .theme-toggle button.active { background: var(--accent); color: var(--bg); }
 </style>
 </head>
 <body>
@@ -137,6 +183,10 @@
     </div>
     <h1>Flight Planning Tools</h1>
     <p class="subtitle">Performance calculators and OFP based on POH data</p>
+    <div class="theme-toggle" role="group" aria-label="Färgtema">
+      <button type="button" data-theme-btn="dark" aria-pressed="false" onclick="setTheme('dark')">☾ Mörkt</button>
+      <button type="button" data-theme-btn="light" aria-pressed="false" onclick="setTheme('light')">☀ Ljust</button>
+    </div>
   </header>
 
   <div class="cards">
@@ -159,5 +209,21 @@
     All performance data is digitized from POH diagrams and interpolated — values are approximations that may contain errors. Always verify every number against the approved Pilot's Operating Handbook before flight. The pilot in command is solely responsible for flight planning decisions.
   </div>
 </div>
+<script>
+  // Cookie without a path so it covers exactly this folder (all the tool pages live beside index.html).
+  function syncThemeButtons(t) {
+    document.querySelectorAll('[data-theme-btn]').forEach(b => {
+      var active = b.dataset.themeBtn === t;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-pressed', active);
+    });
+  }
+  function setTheme(t) {
+    document.documentElement.dataset.theme = t;
+    document.cookie = 'theme=' + t + '; max-age=31536000; SameSite=Lax';
+    syncThemeButtons(t);
+  }
+  syncThemeButtons(document.documentElement.dataset.theme);
+</script>
 </body>
 </html>
