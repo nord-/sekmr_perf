@@ -657,9 +657,10 @@
             <div class="result-unit">NM (48 USG)</div>
           </div>
         </div>
+        <div class="isa-indicator warm" id="cru_limit" style="display:none; margin-top:0.75rem;"></div>
         <div class="note" style="margin-top:1.25rem;">
-          <strong>Speed Power (Economy Cruise):</strong> Best economy mixture leaned to peak EGT. Wheel fairings installed, 2550 lbs.<br>
-          <strong>Engine Performance:</strong> Best power mixture leaned 100°F ROP. Fuel flow och RPM per power setting.<br>
+          <strong>Speed Power (Fig. 5-21 / 5-23):</strong> TAS för best power (100°F ROP) resp. best economy (peak EGT). Wheel fairings installed, 2550 lbs. POH ger inga economy-TAS över 65 %.<br>
+          <strong>Engine Performance (Fig. 5-19):</strong> RPM (best power mixture) och fuel flow per power setting. Över ca 7 500 ft DA nås inte 75 % — kalkylatorn begränsar till full throttle.<br>
           Räckvidd baserad på 48 US gallon totalt med 45 min VFR-reserv (vid aktuell fuel flow).
         </div>
       </div>
@@ -807,55 +808,86 @@ const descentData = {
   11000: { time: 29,   fuel: 3.8,  dist: 60 },
   12000: { time: 32,   fuel: 4.2,  dist: 66 }
 };
-// The POH charts work by: OAT + pressure alt → density alt → result
+// ═══════════════════════════════════════════
+// CRUISE — SPEED POWER (POH Fig. 5-21 best power, Fig. 5-23 best economy)
+// TAS (kts) by density altitude and % power. 2550 lbs, wheel fairings installed.
+// The POH charts resolve OAT + pressure alt → density alt → TAS, so the tables
+// are keyed by density altitude. Digitized from the chart scans, ±1 kt.
 //
-// Verified anchor points:
-//   DA≈1200 (3000ft/-6°C), 65% → TAS 110 kt
-//   DA≈5500 (5500ft/4°C),  65% → TAS ~116 kt (chart example)
-//   DA≈6470 (6000ft/13°C), 65% → TAS ~116 kt (chart example)
+// Best power (100°F ROP): the 75% curve meets the "2650 RPM or full throttle"
+// line at ~7500 ft DA. Above that the 75% column is a straight extrapolation
+// that only serves the 65–75% interpolation; requests beyond the full-throttle
+// limit are clamped in calcCruise() and use fullThrottleTAS instead.
+// Best economy (peak EGT): the POH only charts 55% and 65%.
 //
-// Speed Power - Economy Cruise: TAS by density alt & power
+// Chart examples: 5500 ft / -1°C / 55% best power → 101 kt
+//                 6000 ft / 13°C / 65% economy   → 116 kt
 // ═══════════════════════════════════════════
 const cruiseTAS = {
-  // { densityAlt: { power%: TAS_kts } }
-  // Economy cruise, wheel fairings, 2550 lbs
-  // Anchor: DA≈1200, 65% → 110 kt;  DA≈7200, 65% → 116 kt
-  0:     { 55: 97,  65: 108 },
-  2000:  { 55: 99,  65: 111 },
-  4000:  { 55: 101, 65: 113 },
-  6000:  { 55: 103, 65: 115 },
-  8000:  { 55: 106, 65: 117 },
-  10000: { 55: 109, 65: 120 },
-  12000: { 55: 113, 65: 124 }
+  best_power: {
+    0:     { 55: 95,    65: 107.5, 75: 116 },
+    1000:  { 55: 96,    65: 109,   75: 117 },
+    2000:  { 55: 97,    65: 110,   75: 118.5 },
+    3000:  { 55: 98,    65: 111,   75: 119.5 },
+    4000:  { 55: 99,    65: 112.5, 75: 121 },
+    5000:  { 55: 100,   65: 114,   75: 122.5 },
+    6000:  { 55: 101.5, 65: 115.5, 75: 125 },
+    7000:  { 55: 102.5, 65: 117,   75: 126.5 },
+    8000:  { 55: 104,   65: 118,   75: 128 },    // 75%: extrapolated from here
+    9000:  { 55: 105,   65: 119.5, 75: 129.5 },
+    10000: { 55: 106,   65: 120.5, 75: 131 },
+    11000: { 55: 107.5, 65: 122.5, 75: 132.5 },
+    12000: { 55: 108.5, 65: 123.5, 75: 134 }
+  },
+  economy: {
+    0:     { 55: 94.5,  65: 107.5 },
+    1000:  { 55: 95.5,  65: 109 },
+    2000:  { 55: 96.5,  65: 110 },
+    3000:  { 55: 97,    65: 111 },
+    4000:  { 55: 98,    65: 112.5 },
+    5000:  { 55: 99,    65: 113.5 },
+    6000:  { 55: 100,   65: 115 },
+    7000:  { 55: 101,   65: 116 },
+    8000:  { 55: 102,   65: 116.5 },
+    9000:  { 55: 103,   65: 118 },
+    10000: { 55: 104,   65: 119 },
+    11000: { 55: 105,   65: 120 },
+    12000: { 55: 106,   65: 121 }
+  }
+};
+const ECONOMY_MAX_POWER = 65; // Fig. 5-23 has no curve above 65%
+
+// TAS at 2650 RPM or full throttle, best power mixture (Fig. 5-21 limit line)
+const fullThrottleTAS = {
+  0: 128, 1000: 128, 2000: 128.5, 3000: 128.5, 4000: 129, 5000: 129, 6000: 129,
+  7000: 128, 8000: 127.5, 9000: 127, 10000: 126, 11000: 125, 12000: 124
 };
 
+// Highest % power obtainable at full throttle, read where the power curves
+// meet the full-throttle line: 75% up to ~7500 ft DA, 65% at 12 000 ft.
+// Consistent with Fig. 5-19, where the 70% RPM line ends at ~9800 ft DA.
+function maxPowerAvailable(densAlt) {
+  if (densAlt <= 7500) return 75;
+  return 75 - 10 * Math.min(densAlt - 7500, 4500) / 4500;
+}
+
 // ═══════════════════════════════════════════
-// ENGINE PERFORMANCE — RPM by density alt & power
-// Best Power mixture (100°F ROP)
-// Higher density alt → higher RPM needed for same power
-//
-// Verified:
-//   DA≈1200, 65% → 2350 RPM
-//   DA≈5500, 65% → 2450 RPM
+// ENGINE PERFORMANCE — RPM by density alt & power (POH Fig. 5-19)
+// Best power mixture (100°F ROP). The chart lines are straight, ~20.6 RPM per
+// 1000 ft DA, so two rows suffice. 75% ends at ~8000 ft DA and 70% at ~9800 ft
+// (full throttle) — handled by maxPowerAvailable().
+// Chart example: 5500 ft / 4°C / 65% → 2450 RPM
 // ═══════════════════════════════════════════
 const cruiseRPM = {
-  // { densityAlt: { power%: RPM } }
-  0:     { 55: 2170, 60: 2240, 65: 2320, 70: 2400, 75: 2470 },
-  2000:  { 55: 2200, 60: 2275, 65: 2365, 70: 2435, 75: 2505 },
-  4000:  { 55: 2230, 60: 2310, 65: 2410, 70: 2470, 75: 2540 },
-  6000:  { 55: 2260, 60: 2350, 65: 2460, 70: 2520, 75: 2580 },
-  8000:  { 55: 2300, 60: 2400, 65: 2500, 70: 2570, 75: 2630 },
-  10000: { 55: 2350, 60: 2450, 65: 2560, 70: 2630, 75: 2680 },
-  12000: { 55: 2420, 60: 2520, 65: 2620, 70: 2690, 75: 2720 }
+  0:     { 55: 2167, 60: 2246, 65: 2328, 70: 2397, 75: 2466 },
+  12000: { 55: 2414, 60: 2493, 65: 2575, 70: 2644, 75: 2713 }
 };
+const RPM_MAX = 2650;
 
-// Fuel flow gallons per hour from POH table
-// Best Power (100°F ROP) and Best Economy (peak EGT)
+// Fuel flow, US gal/h — table on POH Fig. 5-19 (60% and 70% are interpolated)
 const fuelFlow = {
   55: { best_power: 7.8,  economy: 6.3 },
-  60: { best_power: 8.4,  economy: 6.9 },
   65: { best_power: 9.0,  economy: 7.6 },
-  70: { best_power: 9.8,  economy: 8.2 },
   75: { best_power: 10.5, economy: 8.8 }
 };
 
@@ -876,14 +908,16 @@ function updateISA(id, alt, oat) {
 
 function lerp(data, alt) {
   const alts = Object.keys(data).map(Number).sort((a,b) => a - b);
-  if (alt <= alts[0]) return { ...data[alts[0]] };
-  if (alt >= alts[alts.length - 1]) return { ...data[alts[alts.length - 1]] };
+  const clone = v => typeof v === 'number' ? v : { ...v };
+  if (alt <= alts[0]) return clone(data[alts[0]]);
+  if (alt >= alts[alts.length - 1]) return clone(data[alts[alts.length - 1]]);
   let lo, hi;
   for (let i = 0; i < alts.length - 1; i++) {
     if (alt >= alts[i] && alt <= alts[i + 1]) { lo = alts[i]; hi = alts[i + 1]; break; }
   }
   const t = (alt - lo) / (hi - lo);
   const a = data[lo], b = data[hi];
+  if (typeof a === 'number') return a + t * (b - a);
   const result = {};
   for (const k of Object.keys(a)) {
     if (typeof a[k] === 'number') result[k] = a[k] + t * (b[k] - a[k]);
@@ -1015,15 +1049,30 @@ function calcCruise() {
   const isaTemp = getISA(alt);
   const densAlt = alt + 120 * (temp - isaTemp);
 
+  // Power actually obtainable: full-throttle limit above ~7500 ft DA
+  const maxPower = maxPowerAvailable(densAlt);
+  const fullThrottle = power > maxPower;
+  const usedPower = fullThrottle ? maxPower : power;
+  // Economy TAS is only charted up to 65%; RPM and fuel flow still apply
+  const noEconomyTAS = cruMix === 'economy' && usedPower > ECONOMY_MAX_POWER;
+
+  let limitMsg = '';
+  if (noEconomyTAS) limitMsg = `POH saknar TAS över ${ECONOMY_MAX_POWER} % för best economy (Fig. 5-23)`;
+  else if (fullThrottle) limitMsg = `Full throttle vid ${Math.round(densAlt).toLocaleString()} ft DA — max ca ${Math.round(maxPower)} % power`;
+  const limitEl = document.getElementById('cru_limit');
+  limitEl.textContent = limitMsg;
+  limitEl.style.display = limitMsg ? '' : 'none';
+
   // TAS from density altitude
-  let tas = lerpNested(cruiseTAS, densAlt, power);
+  // Economy has no full-throttle line of its own; at usedPower <= 65% its 65% curve is that line
+  let tas = fullThrottle && cruMix === 'best_power' ? lerp(fullThrottleTAS, densAlt) : lerpNested(cruiseTAS[cruMix], densAlt, usedPower);
   if (!fairings) tas -= 8;
 
-  // RPM from density altitude
-  let rpm = lerpNested(cruiseRPM, densAlt, power);
+  // RPM from density altitude (best power chart; leaning afterwards does not change RPM)
+  const rpm = Math.min(lerpNested(cruiseRPM, densAlt, usedPower), RPM_MAX);
 
   // Fuel flow (not density-dependent, just power & mixture)
-  const ffGal = interpFF(power, cruMix);
+  const ffGal = interpFF(usedPower, cruMix);
   const ffL = ffGal * GAL_TO_L;
 
   // Range: usable fuel, minus 45 min reserve
@@ -1032,10 +1081,10 @@ function calcCruise() {
   const enduranceHrs = usableGal / ffGal;
   const range = enduranceHrs * tas;
 
-  document.getElementById('cru_resTas').textContent = Math.round(tas);
+  document.getElementById('cru_resTas').textContent = noEconomyTAS ? '—' : Math.round(tas);
   document.getElementById('cru_resRpm').textContent = Math.round(rpm / 10) * 10;
   document.getElementById('cru_resFf').textContent = ffL.toFixed(1);
-  document.getElementById('cru_resRange').textContent = Math.round(range);
+  document.getElementById('cru_resRange').textContent = noEconomyTAS ? '—' : Math.round(range);
 }
 
 // ═══════════════════════════════════════════
